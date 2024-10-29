@@ -10,6 +10,8 @@ const int CANTIDAD_MESAS = 10;
 const int CANTIDAD_HERRAMIENTAS = 14;
 const int CANTIDAD_OBSTACULOS = 5;
 const int INDICE_MOPA = 0;
+
+#define MIN_COMENSALES 1
 #define MESA  'T'
 #define LINGUINI 'L'
 #define COCINA 'C'
@@ -22,6 +24,7 @@ const int INDICE_MOPA = 0;
 #define IZQUIERDA 'A'
 #define DERECHA 'D'
 #define VACIO '.'
+#define ASIENTO_OCUPADO 'X'
 
 const int GANO = 1;
 const int PERDIO = -1;
@@ -89,6 +92,11 @@ void asignar_posiciones(juego_t *juego,char mapa[MAX_FILAS][MAX_COLUMNAS]){
     for(int i = 0; i < juego->cantidad_mesas; i++){
         for(int j = 0; j < juego->mesas[i].cantidad_lugares; j++){
             mapa[juego->mesas[i].posicion[j].fil][juego->mesas[i].posicion[j].col] = MESA;
+            if(juego->mesas[i].cantidad_comensales != 0){
+                for(int k = 0; k < juego->mesas[i].cantidad_comensales; k++){
+                    mapa[juego->mesas[i].posicion[k].fil][juego->mesas[i].posicion[k].col] = ASIENTO_OCUPADO;
+                }
+            }
         }
     }
 
@@ -478,7 +486,7 @@ void interaccion_mopa(coordenada_t posicion_mozo, juego_t *juego){
             printf("\nNo es posible soltar la mopa sobre un espacio ocupado.\n");
             sleep(1);
         }else{
-            printf("\nMopa soltada. \n");
+            printf("\nMopa soltada.\n");
             sleep(1);
             juego->herramientas[0].posicion.fil = posicion_mozo.fil;
             juego->herramientas[0].posicion.col = posicion_mozo.col;
@@ -522,6 +530,9 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
         juego->movimientos++;
     }
 }
+
+
+/*Funciones del .h*/
 
 
 void inicializar_juego(juego_t *juego){
