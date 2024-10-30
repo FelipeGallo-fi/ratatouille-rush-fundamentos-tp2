@@ -587,6 +587,32 @@ void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
 
 }
 
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos) {
+    int i = 0;
+    bool hay_cucaracha = false;
+    int indice_cucaracha = -1;
+
+    while(!hay_cucaracha && i < *cantidad_obstaculos){
+        if(obstaculos[i].tipo == CUCARACHA){
+            hay_cucaracha = true;
+            indice_cucaracha = i;
+        }
+        i++;
+    }
+
+    if(hay_cucaracha && mozo.posicion.fil == obstaculos[indice_cucaracha].posicion.fil && mozo.posicion.col == obstaculos[indice_cucaracha].posicion.col){
+        obstaculos[indice_cucaracha].posicion.fil = obstaculos[*cantidad_obstaculos - 1].posicion.fil;
+        obstaculos[indice_cucaracha].posicion.col = obstaculos[*cantidad_obstaculos - 1].posicion.col;
+        (*cantidad_obstaculos)--;
+    }
+}
 
 
 
@@ -599,7 +625,6 @@ Post condiciones: Genera la nueva posicion del mozo en base a que accion se ingr
 */
 
 void generar_nueva_accion_mozo(juego_t *juego, char accion){
-    
     coordenada_t posicion_actual_mozo_mod;
     posicion_actual_mozo_mod.fil = juego->mozo.posicion.fil;
     posicion_actual_mozo_mod.col = juego->mozo.posicion.col;
@@ -624,6 +649,8 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
         juego->mozo.posicion.fil = posicion_actual_mozo_mod.fil;
         juego->mozo.posicion.col = posicion_actual_mozo_mod.col;
         juego->movimientos++;
+
+        interaccion_cucaracha(juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
     }
 }
 
@@ -634,6 +661,7 @@ Post:
 
 
 bool hay_asientos_libres(int cantidad_mesas, mesa_t *mesa, int *indice_mesa_con_lugar, int comensales_a_ingresar){
+
     bool encontre_lugar = false;
     int i = 0;
 
@@ -683,6 +711,7 @@ Post:
 */
 
 void asignar_comensales(mesa_t *mesa, int cantidad_mesas, int comensales_a_ingresar){
+
     int indice_mesa_con_lugar;
     bool encontre_lugar = hay_asientos_libres(cantidad_mesas, mesa, &indice_mesa_con_lugar, comensales_a_ingresar);
 
