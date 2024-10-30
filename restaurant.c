@@ -145,7 +145,9 @@ void imprimir_juego(juego_t juego){
         }
         printf("\n");
     }
-    printf("\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Pedidos = %i, Pedidos en bandeja = %i, Patines = %i \n", juego.dinero, juego.movimientos, juego.mozo.cantidad_pedidos, juego.mozo.cantidad_bandeja,juego.mozo.cantidad_patines);
+
+
+    printf("\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Pedidos = %i, Pedidos en bandeja = %i, Patines = %s \n", juego.dinero, juego.movimientos, juego.mozo.cantidad_pedidos, juego.mozo.cantidad_bandeja,juego.mozo.patines_puestos ? "Sí" : "No");
 }
 
 /*
@@ -588,13 +590,28 @@ void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
 }
 
 /*
-Pre condiciones:
-
-Post condiciones: 
-
+Pre:
+Post:
 */
 
-void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos) {
+void interaccion_charcos(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
+    for(int i = 0; i < *cantidad_obstaculos ; i++){
+        if(obstaculos[i].tipo == CHARCO && obstaculos[i].posicion.fil == mozo.posicion.fil && obstaculos[i].posicion.col == mozo.posicion.col){
+            obstaculos[i].posicion.fil = obstaculos[*cantidad_obstaculos - 1].posicion.fil;
+            obstaculos[i].posicion.col = obstaculos[*cantidad_obstaculos - 1 ].posicion.col;
+            (*cantidad_obstaculos)--;
+            i--;
+        }
+    }
+}
+
+
+/*
+Pre:
+Post:
+*/
+
+void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
     int i = 0;
     bool hay_cucaracha = false;
     int indice_cucaracha = -1;
@@ -614,6 +631,75 @@ void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obs
     }
 }
 
+/*
+Pre:
+Post:
+*/
+
+void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *movimientos){
+
+    bool no_hay_patines = true;
+    int i = 0;
+
+    while(no_hay_patines && i < *cantidad_herramientas){
+        if(herramientas[i].tipo == PATINES && herramientas[i].posicion.fil == mozo->posicion.fil && herramientas[i].posicion.col == mozo->posicion.col){
+            mozo->patines_puestos = true;
+        
+            herramientas[i].posicion.fil = herramientas[*cantidad_herramientas - 1].posicion.fil;
+            herramientas[i].posicion.col = herramientas[*cantidad_herramientas - 1].posicion.col;
+            no_hay_patines = false;
+            (*cantidad_herramientas)--; 
+            i--; 
+
+            printf("Patines agarrados \n");
+            (*movimientos)++;
+            sleep(1);
+        }
+        i++;
+    }
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void interaccion_obstaculos(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos) {
+
+    if(mozo.tiene_mopa){
+        interaccion_charcos(mozo, obstaculos, cantidad_obstaculos);
+    }else{
+        interaccion_cucaracha(mozo, obstaculos, cantidad_obstaculos);
+    }
+}
+
+void accion_mozo_patines(juego_t *juego, char accion) {
+    bool movimiento_valido = true;
+    coordenada_t posicion_actual_mozo = juego->mozo.posicion;
+    
+    while (movimiento_valido) {
+        if (accion == ARRIBA) {
+            posicion_actual_mozo.fil -= 1;
+        } else if (accion == ABAJO) {
+            posicion_actual_mozo.fil += 1;
+        } else if (accion == DERECHA) {
+            posicion_actual_mozo.col += 1;
+        } else if (accion == IZQUIERDA) {
+            posicion_actual_mozo.col -= 1;
+        }
+        
+        movimiento_valido = es_accion_valida_mozo(posicion_actual_mozo, *juego);
+
+        if(movimiento_valido){
+            interaccion_obstaculos(juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+            juego->mozo.posicion = posicion_actual_mozo; 
+        }
+    }
+    juego->movimientos++;
+    juego->mozo.patines_puestos = false;
+}
 
 
 
@@ -625,6 +711,12 @@ Post condiciones: Genera la nueva posicion del mozo en base a que accion se ingr
 */
 
 void generar_nueva_accion_mozo(juego_t *juego, char accion){
+
+    if(juego->mozo.patines_puestos){
+        accion_mozo_patines(juego, accion); 
+        return;  
+    }
+
     coordenada_t posicion_actual_mozo_mod;
     posicion_actual_mozo_mod.fil = juego->mozo.posicion.fil;
     posicion_actual_mozo_mod.col = juego->mozo.posicion.col;
@@ -648,9 +740,10 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
         actualizar_paciencia(juego->cantidad_mesas, juego->mesas, juego);
         juego->mozo.posicion.fil = posicion_actual_mozo_mod.fil;
         juego->mozo.posicion.col = posicion_actual_mozo_mod.col;
-        juego->movimientos++;
 
-        interaccion_cucaracha(juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+        interaccion_obstaculos(juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+
+        juego->movimientos++;
     }
 }
 
@@ -819,6 +912,8 @@ void realizar_jugada(juego_t *juego, char accion){
 
     if(accion == MOPA){
         interaccion_mopa(juego->mozo.posicion, juego);
+    }else if(accion == PATINES){
+        interaccion_patines(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->movimientos);
     }else{
         generar_nueva_accion_mozo(juego, accion);
     }

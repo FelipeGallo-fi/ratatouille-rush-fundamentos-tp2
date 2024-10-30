@@ -11,6 +11,7 @@
 #define IZQUIERDA 'A'
 #define DERECHA 'D'
 #define MOPA 'O'
+#define PATINES 'P'
 
 const int JUEGO_GANADO = 1;
 const int CONTINUAR_JUEGO = 0;
@@ -21,7 +22,7 @@ Post: Devuelve un booleano si la accion es igual a ARRIBA, ABAJO, DERECHA o MOPA
 */
 
 bool chequear_movimiento_ingresado(char accion){
-    return (accion ==  ARRIBA || accion == ABAJO || accion == DERECHA || accion == IZQUIERDA || accion == MOPA);
+    return (accion ==  ARRIBA || accion == ABAJO || accion == DERECHA || accion == IZQUIERDA || accion == MOPA || accion == PATINES);
 }
 
 /*
@@ -31,7 +32,7 @@ Post: Pregunta por una accion valida.
 
 char preguntar_accion(){
     char accion;
-    printf("\nIngrese un movimiento (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible): \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA);
+    printf("\nIngrese un movimiento (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible) \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES);
     scanf(" %c",&accion);
 
     while(!chequear_movimiento_ingresado(accion)){
