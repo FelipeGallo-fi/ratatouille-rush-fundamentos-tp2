@@ -25,7 +25,10 @@ const int INDICE_MOPA = 0;
 #define DERECHA 'D'
 #define VACIO '.'
 #define ASIENTO_OCUPADO 'X'
+#define CUCARACHA 'U'
 
+const int RANGO_PACIENCIA_MINIMA = 100;
+const int RANGO_PACIENCIA_MAXIMA = 101;
 const int GANO = 1;
 const int PERDIO = -1;
 const int CONTINUAR_JUGANDO = 0;
@@ -45,11 +48,6 @@ typedef struct mesa_aleat{
 
 
 /*Mis funciones*/
-
-void esperar_input(){
-    getchar();
-    getchar();
-}
 
 /*
 * Pre: - 
@@ -111,9 +109,6 @@ void asignar_posiciones(juego_t *juego,char mapa[MAX_FILAS][MAX_COLUMNAS]){
     if(juego->mozo.tiene_mopa == true){
         mapa[juego->herramientas[0].posicion.fil][juego->herramientas[0].posicion.col] = VACIO;
     }
-    
-
-    /*Asigno la posicion a linguini y a la cocina*/
 
     mapa[juego->mozo.posicion.fil][juego->mozo.posicion.col] = LINGUINI;
 
@@ -497,9 +492,71 @@ void interaccion_mopa(coordenada_t posicion_mozo, juego_t *juego){
 }
 
 /*
-* Pre condiciones: La accion debe ser valida la posicion del mozo debe estar inicializada.
+Pre:
+Post:
+*/
 
-* Post condiciones: Genera la nueva posicion del mozo en base a que accion se ingreso.
+bool hay_posicion_libre(juego_t juego, coordenada_t posicion){
+    bool hay_lugar = true;
+
+    for(int i = 0; i < juego.cantidad_mesas; i++){
+        for(int j = 0; j < juego.mesas[i].cantidad_lugares; j++){
+            if(posicion.fil == juego.mesas[i].posicion[j].fil && posicion.col == juego.mesas[i].posicion[j].col){
+                hay_lugar = false;
+            }
+        }
+    }
+
+    for(int i = 0; i < juego.cantidad_herramientas ; i++){
+        if(posicion.fil == juego.herramientas[i].posicion.fil && posicion.col == juego.herramientas[i].posicion.col){
+            hay_lugar = false;
+        }
+    }
+
+    for(int i = 0; i < juego.cantidad_obstaculos ; i++){
+        if(posicion.fil == juego.obstaculos[i].posicion.fil && posicion.col == juego.obstaculos[i].posicion.col){
+            hay_lugar = false;
+        }
+    }
+
+    if(posicion.fil == juego.mozo.posicion.fil && posicion.col == juego.mozo.posicion.col){
+        hay_lugar = false;
+    }
+
+    if(posicion.fil == juego.cocina.posicion.fil && posicion.col == juego.cocina.posicion.col){
+        hay_lugar = false;
+    }
+
+    if(juego.mozo.tiene_mopa == false && juego.herramientas[0].posicion.fil == posicion.fil && juego.herramientas[0].posicion.col == posicion.col){
+        hay_lugar = false;
+    }
+
+    return hay_lugar;
+}
+
+
+/*
+Pre:
+Post:
+*/
+
+void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[]){
+    for(int i = 0; i < cantidad_mesas; i++){
+        if(mesas[i].cantidad_comensales != 0){
+            mesas[i].paciencia--;
+        }
+        if(mesas[i].paciencia == 0){
+            mesas[i].cantidad_comensales = 0;
+        }
+
+    }
+}
+
+
+/*
+Pre condiciones: La accion debe ser valida la posicion del mozo debe estar inicializada.
+
+Post condiciones: Genera la nueva posicion del mozo en base a que accion se ingreso.
 
 */
 
@@ -525,10 +582,129 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
     bool accion_mozo_valida = es_accion_valida_mozo(posicion_actual_mozo_mod, *juego);
 
     if(accion_mozo_valida){
+        actualizar_paciencia(juego->cantidad_mesas, juego->mesas);
         juego->mozo.posicion.fil = posicion_actual_mozo_mod.fil;
         juego->mozo.posicion.col = posicion_actual_mozo_mod.col;
         juego->movimientos++;
     }
+}
+
+/*
+Pre: -
+Post: 
+*/
+
+
+bool hay_asientos_libres(int cantidad_mesas, mesa_t *mesa, int *indice_mesa_con_lugar, int comensales_a_ingresar){
+    bool encontre_lugar = false;
+    int i = 0;
+
+    if(comensales_a_ingresar == 1){
+        while(!encontre_lugar && i < cantidad_mesas){
+            if(mesa[i].cantidad_lugares == 1 && mesa[i].cantidad_comensales == 0){
+                encontre_lugar = true;
+                *indice_mesa_con_lugar = i;
+            }
+            i++;
+        }
+        i = 0;
+        while(!encontre_lugar && i < cantidad_mesas){
+            if(mesa[i].cantidad_lugares == 4 && mesa[i].cantidad_comensales == 0){
+                encontre_lugar = true;
+                *indice_mesa_con_lugar = i;
+            }
+            i++;
+        }
+    }else {
+        i = 0;
+        while(!encontre_lugar && i < cantidad_mesas){
+            if(mesa[i].cantidad_comensales == 0 && mesa[i].cantidad_lugares >= comensales_a_ingresar){
+                encontre_lugar = true;
+                *indice_mesa_con_lugar = i;
+            }
+            i++;
+        }
+    }
+
+    return encontre_lugar;
+}
+
+
+/*
+Pre: maximo_valor debe ser si o si mayor o igual a minimo_valor
+Post: devuelve un numero aleatorio en el rango especificado.
+*/
+
+int generar_numero_aleatorio(int rango_maximo, int rango_minimo){
+    return ((rand() % rango_maximo) + rango_minimo); 
+}
+
+/*
+Pre:
+Post:
+*/
+
+void asignar_comensales(mesa_t *mesa, int cantidad_mesas, int comensales_a_ingresar){
+    int indice_mesa_con_lugar;
+    bool encontre_lugar = hay_asientos_libres(cantidad_mesas, mesa, &indice_mesa_con_lugar, comensales_a_ingresar);
+
+    if(encontre_lugar){
+        int paciencia_aleatoria = generar_numero_aleatorio(RANGO_PACIENCIA_MAXIMA, RANGO_PACIENCIA_MINIMA);
+        mesa[indice_mesa_con_lugar].cantidad_comensales = comensales_a_ingresar;
+        mesa[indice_mesa_con_lugar].paciencia = paciencia_aleatoria;
+    }
+}
+
+/*
+Pre:
+Post:
+*/
+
+void aparecer_cucarachas(juego_t *juego){
+    coordenada_t posicion_aleatoria;
+    bool posicion_invalida = true;
+
+    while(posicion_invalida){
+        posicion_aleatoria = generar_posicion_aleatoria();
+        bool encontre_posicion = hay_posicion_libre(*juego, posicion_aleatoria);
+        if(encontre_posicion){
+            juego->obstaculos[juego->cantidad_obstaculos].posicion.fil = posicion_aleatoria.fil;
+            juego->obstaculos[juego->cantidad_obstaculos].posicion.col = posicion_aleatoria.col;
+            juego->obstaculos[juego->cantidad_obstaculos].tipo = CUCARACHA;
+            juego->cantidad_obstaculos++;
+            posicion_invalida = false;
+        }
+    }
+
+}
+
+
+/*
+Pre:
+Post:
+*/
+
+void llegada_comensales(juego_t *juego){
+
+    int cantidad_comensales = generar_numero_aleatorio(MAX_COMENSALES,MIN_COMENSALES);
+
+    asignar_comensales(juego->mesas,juego->cantidad_mesas, cantidad_comensales);
+}
+
+
+/*
+Pre:
+Post:
+*/
+
+void actualizacion_del_juego(juego_t *juego){
+    if(juego->movimientos % 15 == 0 && juego->movimientos > 0){
+        llegada_comensales(juego);
+    }
+    if(juego->movimientos % 25 == 0 && juego->movimientos > 0){
+        aparecer_cucarachas(juego);
+    }
+    
 }
 
 
@@ -579,6 +755,8 @@ void realizar_jugada(juego_t *juego, char accion){
     }else{
         generar_nueva_accion_mozo(juego, accion);
     }
+
+    actualizacion_del_juego(juego);
 }
 
 int estado_juego(juego_t juego){
