@@ -38,6 +38,7 @@ const int CANTIDAD_MONEDAS = 8;
 const int CANTIDAD_MOPAS = 1;
 const int CANTIDAD_PATINES = 5;
 const int CANTIDAD_CHARCOS = 5;
+const int DISTANCIA_CUCARACHA = 2;
 
 /*Structs utilizados*/
 
@@ -48,6 +49,15 @@ typedef struct mesa_aleat{
 
 
 /*Mis funciones*/
+
+/*
+* Pre: - 
+* Posts: Inicializa todos los valores como false.
+*/
+
+int distancia_manhattan(coordenada_t primera_posicion, coordenada_t segunda_posicion){
+    return abs(primera_posicion.fil - segunda_posicion.fil) + abs(primera_posicion.col - segunda_posicion.col);
+}
 
 /*
 * Pre: - 
@@ -534,23 +544,51 @@ bool hay_posicion_libre(juego_t juego, coordenada_t posicion){
     return hay_lugar;
 }
 
+int distancia_de_cucaracha(juego_t *juego, mesa_t mesa) {
+    int distancia_minima = 100; 
+    for(int j = 0; j < mesa.cantidad_lugares; j++) {
+        for(int k = 0; k < juego->cantidad_obstaculos; k++) {
+            if(juego->obstaculos[k].tipo == CUCARACHA) {
+                int distancia_actual = distancia_manhattan(mesa.posicion[j], juego->obstaculos[k].posicion);
+                if(distancia_actual < distancia_minima) {
+                    distancia_minima = distancia_actual;
+                }
+            }
+        }
+    }
+    return distancia_minima;
+}
+
 
 /*
 Pre:
 Post:
 */
 
-void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[]){
+void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
     for(int i = 0; i < cantidad_mesas; i++){
+
         if(mesas[i].cantidad_comensales != 0){
+
             mesas[i].paciencia--;
+
+            int distancia_cucaracha = distancia_de_cucaracha(juego, mesas[i]);
+
+            if(distancia_cucaracha <= DISTANCIA_CUCARACHA){
+                mesas[i].paciencia -= DISTANCIA_CUCARACHA;
+            }
+    
         }
-        if(mesas[i].paciencia == 0){
+        
+        if(mesas[i].paciencia <= 0){
             mesas[i].cantidad_comensales = 0;
         }
-
     }
+
 }
+
+
+
 
 
 /*
@@ -582,7 +620,7 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
     bool accion_mozo_valida = es_accion_valida_mozo(posicion_actual_mozo_mod, *juego);
 
     if(accion_mozo_valida){
-        actualizar_paciencia(juego->cantidad_mesas, juego->mesas);
+        actualizar_paciencia(juego->cantidad_mesas, juego->mesas, juego);
         juego->mozo.posicion.fil = posicion_actual_mozo_mod.fil;
         juego->mozo.posicion.col = posicion_actual_mozo_mod.col;
         juego->movimientos++;
