@@ -27,6 +27,7 @@ const int INDICE_MOPA = 0;
 #define ASIENTO_OCUPADO 'X'
 #define CUCARACHA 'U'
 
+const int VALOR_MONEDA = 1000;
 const int RANGO_PACIENCIA_MINIMA = 100;
 const int RANGO_PACIENCIA_MAXIMA = 101;
 const int GANO = 1;
@@ -141,13 +142,13 @@ void imprimir_juego(juego_t juego){
     system("clear");
     for (int i = 0; i < MAX_FILAS; i++){
         for (int j = 0; j < MAX_COLUMNAS; j++){
-            printf("|%c", mapa[i][j]);
+            printf("| %c ", mapa[i][j]);
         }
         printf("\n");
     }
 
 
-    printf("\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Pedidos = %i, Pedidos en bandeja = %i, Patines = %s \n", juego.dinero, juego.movimientos, juego.mozo.cantidad_pedidos, juego.mozo.cantidad_bandeja,juego.mozo.patines_puestos ? "Sí" : "No");
+    printf("\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Pedidos = %i, Pedidos en bandeja = %i, Patines disponibles = %i, Patines activados = %s , Mopa agarrada: %s\n", juego.dinero, juego.movimientos, juego.mozo.cantidad_pedidos, juego.mozo.cantidad_bandeja,juego.mozo.cantidad_patines, juego.mozo.patines_puestos ? "Sí" : "No", juego.mozo.tiene_mopa ? "Sí" : "No");
 }
 
 /*
@@ -546,6 +547,11 @@ bool hay_posicion_libre(juego_t juego, coordenada_t posicion){
     return hay_lugar;
 }
 
+/*
+Pre:
+Post:
+*/
+
 int distancia_de_cucaracha(juego_t *juego, mesa_t mesa) {
     int distancia_minima = 100; 
     for(int j = 0; j < mesa.cantidad_lugares; j++) {
@@ -597,8 +603,7 @@ Post:
 void interaccion_charcos(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
     for(int i = 0; i < *cantidad_obstaculos ; i++){
         if(obstaculos[i].tipo == CHARCO && obstaculos[i].posicion.fil == mozo.posicion.fil && obstaculos[i].posicion.col == mozo.posicion.col){
-            obstaculos[i].posicion.fil = obstaculos[*cantidad_obstaculos - 1].posicion.fil;
-            obstaculos[i].posicion.col = obstaculos[*cantidad_obstaculos - 1 ].posicion.col;
+            obstaculos[i] = obstaculos[*cantidad_obstaculos - 1];
             (*cantidad_obstaculos)--;
             i--;
         }
@@ -612,47 +617,52 @@ Post:
 */
 
 void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
-    int i = 0;
-    bool hay_cucaracha = false;
-    int indice_cucaracha = -1;
-
-    while(!hay_cucaracha && i < *cantidad_obstaculos){
-        if(obstaculos[i].tipo == CUCARACHA){
-            hay_cucaracha = true;
-            indice_cucaracha = i;
+    for(int i = 0; i < *cantidad_obstaculos; i++ ){
+        if(obstaculos[i].tipo == CUCARACHA && obstaculos[i].posicion.fil == mozo.posicion.fil && obstaculos[i].posicion.col ==  mozo.posicion.col){
+            obstaculos[i] = obstaculos[*cantidad_obstaculos - 1];
+            (*cantidad_obstaculos)--;
+            i--;
         }
-        i++;
     }
+}
+/*
+Pre condiciones:
 
-    if(hay_cucaracha && mozo.posicion.fil == obstaculos[indice_cucaracha].posicion.fil && mozo.posicion.col == obstaculos[indice_cucaracha].posicion.col){
-        obstaculos[indice_cucaracha].posicion.fil = obstaculos[*cantidad_obstaculos - 1].posicion.fil;
-        obstaculos[indice_cucaracha].posicion.col = obstaculos[*cantidad_obstaculos - 1].posicion.col;
-        (*cantidad_obstaculos)--;
+Post condiciones: 
+
+*/
+
+void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *dinero){
+    for(int i = 0; i < *cantidad_herramientas; i++ ){
+        if(herramientas[i].tipo == MONEDA && herramientas[i].posicion.fil == mozo->posicion.fil && herramientas[i].posicion.col ==  mozo->posicion.col){
+            herramientas[i] = herramientas[*cantidad_herramientas - 1];
+            (*cantidad_herramientas)--;
+            (*dinero) += VALOR_MONEDA;
+            printf("Moneda agarrada! \n");
+            i--;
+        }
     }
 }
 
 /*
-Pre:
-Post:
+Pre condiciones:
+
+Post condiciones: 
+
 */
 
-void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *movimientos){
-
+void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas){
     bool no_hay_patines = true;
     int i = 0;
 
     while(no_hay_patines && i < *cantidad_herramientas){
         if(herramientas[i].tipo == PATINES && herramientas[i].posicion.fil == mozo->posicion.fil && herramientas[i].posicion.col == mozo->posicion.col){
-            mozo->patines_puestos = true;
-        
-            herramientas[i].posicion.fil = herramientas[*cantidad_herramientas - 1].posicion.fil;
-            herramientas[i].posicion.col = herramientas[*cantidad_herramientas - 1].posicion.col;
+            herramientas[i] = herramientas[*cantidad_herramientas - 1];
+            i--;
             no_hay_patines = false;
-            (*cantidad_herramientas)--; 
-            i--; 
-
+            (*cantidad_herramientas)--;
+            mozo->cantidad_patines++;
             printf("Patines agarrados \n");
-            (*movimientos)++;
             sleep(1);
         }
         i++;
@@ -666,14 +676,39 @@ Post condiciones:
 
 */
 
-void interaccion_obstaculos(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos) {
+void interaccion_herramientas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *dinero){
 
-    if(mozo.tiene_mopa){
-        interaccion_charcos(mozo, obstaculos, cantidad_obstaculos);
+    if(mozo->tiene_mopa){
+        return;
     }else{
-        interaccion_cucaracha(mozo, obstaculos, cantidad_obstaculos);
+        interaccion_patines(mozo, herramientas, cantidad_herramientas);
+        interaccion_monedas(mozo, herramientas, cantidad_herramientas, dinero);
+    }
+    
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void interaccion_obstaculos(mozo_t *mozo, objeto_t obstaculos[], int *cantidad_obstaculos) {
+
+    if(mozo->tiene_mopa){
+        interaccion_charcos(*mozo, obstaculos, cantidad_obstaculos);
+    }else{
+        interaccion_cucaracha(*mozo, obstaculos, cantidad_obstaculos);
     }
 }
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
 
 void accion_mozo_patines(juego_t *juego, char accion) {
     bool movimiento_valido = true;
@@ -693,13 +728,37 @@ void accion_mozo_patines(juego_t *juego, char accion) {
         movimiento_valido = es_accion_valida_mozo(posicion_actual_mozo, *juego);
 
         if(movimiento_valido){
-            interaccion_obstaculos(juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+            interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+            interaccion_herramientas(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->dinero);
             juego->mozo.posicion = posicion_actual_mozo; 
         }
     }
     juego->movimientos++;
     juego->mozo.patines_puestos = false;
 }
+
+
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void activar_patines(int cantidad_patines, juego_t *juego, char accion){
+    if(cantidad_patines > 0){
+        if(!juego->mozo.patines_puestos){
+            juego->mozo.patines_puestos = true;
+            printf("Patines activados! \n");
+            sleep(1);
+        }
+    }else if(cantidad_patines <= 0){
+        printf("No tienes patines disponibles! \n");
+        sleep(1);
+    }
+}
+
 
 
 
@@ -714,7 +773,7 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
 
     if(juego->mozo.patines_puestos){
         accion_mozo_patines(juego, accion); 
-        return;  
+        return;
     }
 
     coordenada_t posicion_actual_mozo_mod;
@@ -741,7 +800,8 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
         juego->mozo.posicion.fil = posicion_actual_mozo_mod.fil;
         juego->mozo.posicion.col = posicion_actual_mozo_mod.col;
 
-        interaccion_obstaculos(juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+        interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+        interaccion_herramientas(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->dinero);
 
         juego->movimientos++;
     }
@@ -913,7 +973,7 @@ void realizar_jugada(juego_t *juego, char accion){
     if(accion == MOPA){
         interaccion_mopa(juego->mozo.posicion, juego);
     }else if(accion == PATINES){
-        interaccion_patines(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->movimientos);
+        activar_patines(juego->mozo.cantidad_patines, juego, accion);
     }else{
         generar_nueva_accion_mozo(juego, accion);
     }
