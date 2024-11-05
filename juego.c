@@ -33,7 +33,7 @@ Post: Pregunta por una accion valida.
 
 char preguntar_accion(){
     char accion;
-    printf("\nIngrese un movimiento (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible, %c: para tomar el pedido , es necesario estar a 1 posicion de distancia de una mesa):  \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES, TOMAR_PEDIDO);
+    printf("\nIngrese un movimiento (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible, %c: para tomar el pedido de una mesa ocupada , es necesario estar a 1 posicion de distancia de una mesa):  \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES, TOMAR_PEDIDO);
     scanf(" %c",&accion);
 
     while(!chequear_movimiento_ingresado(accion)){
