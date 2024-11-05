@@ -11,6 +11,18 @@ const int CANTIDAD_HERRAMIENTAS = 14;
 const int CANTIDAD_OBSTACULOS = 5;
 const int INDICE_MOPA = 0;
 
+#define MILANESA_NAPOLITANA 'M'
+#define HAMBURGUESA 'H'
+#define PARRILLA 'P'
+#define RATATOUILLE 'R'
+#define MILANESA_NAPOLITANA_ID 1
+#define HAMBURGUESA_ID 2
+#define PARRILLA_ID 3
+#define RATATOUILLE_ID 4
+#define TIEMPO_MILANESA_NAPOLITANA 30
+#define TIEMPO_HAMBURGUESA 15
+#define TIEMPO_PARRILLA 20
+#define TIEMPO_RATATOUILLE 25
 #define MIN_COMENSALES 1
 #define MESA  'T'
 #define LINGUINI 'L'
@@ -23,6 +35,7 @@ const int INDICE_MOPA = 0;
 #define ABAJO 'S'
 #define IZQUIERDA 'A'
 #define DERECHA 'D'
+#define TOMAR_PEDIDO 'T'
 #define VACIO '.'
 #define ASIENTO_OCUPADO 'X'
 #define CUCARACHA 'U'
@@ -59,6 +72,17 @@ typedef struct mesa_aleat{
 int distancia_manhattan(coordenada_t primera_posicion, coordenada_t segunda_posicion){
     return abs(primera_posicion.fil - segunda_posicion.fil) + abs(primera_posicion.col - segunda_posicion.col);
 }
+
+
+/*
+Pre: maximo_valor debe ser si o si mayor o igual a minimo_valor
+Post: devuelve un numero aleatorio en el rango especificado.
+*/
+
+int generar_numero_aleatorio(int rango_maximo, int rango_minimo){
+    return ((rand() % rango_maximo) + rango_minimo); 
+}
+
 
 /*
 * Pre: - 
@@ -148,7 +172,7 @@ void imprimir_juego(juego_t juego){
     }
 
 
-    printf("\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Pedidos = %i, Pedidos en bandeja = %i, Patines disponibles = %i, Patines activados = %s , Mopa agarrada: %s\n", juego.dinero, juego.movimientos, juego.mozo.cantidad_pedidos, juego.mozo.cantidad_bandeja,juego.mozo.cantidad_patines, juego.mozo.patines_puestos ? "Sí" : "No", juego.mozo.tiene_mopa ? "Sí" : "No");
+    printf("\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Pedidos tomados = %i, Pedidos en bandeja = %i, Patines disponibles = %i, Patines activados = %s , Mopa agarrada: %s\n", juego.dinero, juego.movimientos, juego.mozo.cantidad_pedidos, juego.mozo.cantidad_bandeja,juego.mozo.cantidad_patines, juego.mozo.patines_puestos ? "Sí" : "No", juego.mozo.tiene_mopa ? "Sí" : "No");
 }
 
 /*
@@ -567,6 +591,23 @@ int distancia_de_cucaracha(juego_t *juego, mesa_t mesa) {
     return distancia_minima;
 }
 
+/*
+Pre:
+Post:
+*/
+
+void eliminar_pedido(pedido_t pedidos[], int *cantidad_pedidos, int indice_mesa) {
+
+    for (int i = 0; i < *cantidad_pedidos; i++) {
+        if (pedidos[i].id_mesa == indice_mesa) {
+            for (int j = i; j < *cantidad_pedidos - 1; j++) {
+                pedidos[j] = pedidos[j + 1];
+            }
+            (*cantidad_pedidos)--;
+        }
+    }
+}
+
 
 /*
 Pre:
@@ -589,6 +630,9 @@ void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
         }
         
         if(mesas[i].paciencia <= 0){
+            if(mesas[i].pedido_tomado){
+                eliminar_pedido(juego->mozo.pedidos, &juego->mozo.cantidad_pedidos, i);
+            }
             mesas[i].cantidad_comensales = 0;
         }
     }
@@ -639,6 +683,7 @@ void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
             (*cantidad_herramientas)--;
             (*dinero) += VALOR_MONEDA;
             printf("Moneda agarrada! \n");
+            sleep(1);
             i--;
         }
     }
@@ -737,6 +782,75 @@ void accion_mozo_patines(juego_t *juego, char accion) {
     juego->mozo.patines_puestos = false;
 }
 
+/*
+Pre:
+Post:
+*/
+
+void generar_pedido(pedido_t pedidos[], int *cantidad_pedidos, mesa_t mesa, int indice_mesa) {
+    int cantidad_platos_actual = 0;
+
+    for(int i = 0; i < mesa.cantidad_comensales; i++) {
+        int numero_pedido = generar_numero_aleatorio(4, 1);  
+
+        if (numero_pedido == MILANESA_NAPOLITANA_ID) {
+            pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = MILANESA_NAPOLITANA;
+        } else if (numero_pedido == PARRILLA_ID) {
+            pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = PARRILLA;
+        } else if (numero_pedido == HAMBURGUESA_ID) {
+            pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = HAMBURGUESA;
+        } else {
+            pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = RATATOUILLE;
+        }
+
+        cantidad_platos_actual++;
+        pedidos[*cantidad_pedidos].cantidad_platos = cantidad_platos_actual;
+    }
+
+    pedidos[*cantidad_pedidos].id_mesa = indice_mesa;
+    (*cantidad_pedidos)++;
+}
+
+/*
+Pre:
+Post:
+*/
+
+int distancia_mozo_mesa(coordenada_t posicion_mozo, coordenada_t posicion_ocupada_mesa){
+    return distancia_manhattan(posicion_mozo, posicion_ocupada_mesa);
+}
+
+/*
+Pre:
+Post:
+*/
+
+void tomar_pedido(coordenada_t posicion_mozo, juego_t *juego) {
+    int i = 0;
+    bool pedido_tomado = false;
+
+    while (i < juego->cantidad_mesas && !pedido_tomado) {
+        if (juego->mesas[i].cantidad_comensales != 0) {
+
+            int j = 0;
+            while (j < juego->mesas[i].cantidad_comensales && !pedido_tomado) {
+                int distancia_mozo = distancia_mozo_mesa(posicion_mozo, juego->mesas[i].posicion[j]);
+
+                if (distancia_mozo <= 1) {
+                    juego->mesas[i].pedido_tomado = true;
+                    pedido_tomado = true;
+                    generar_pedido(juego->mozo.pedidos, &juego->mozo.cantidad_pedidos, juego->mesas[i], i);
+
+                    printf("Pedido tomado! \n");
+                    sleep(1);
+                }
+                j++;
+            }
+        }
+        i++;
+    }
+}
+
 
 
 /*
@@ -759,7 +873,14 @@ void activar_patines(int cantidad_patines, juego_t *juego, char accion){
     }
 }
 
-
+void interaccion_pedidos(coordenada_t posicion_mozo, juego_t *juego){
+    if(!juego->mozo.tiene_mopa){
+        tomar_pedido(posicion_mozo, juego);
+    }else{
+        printf("No es posible tomar pedidos con la mopa agarrada. \n");
+        sleep(1);
+    }
+}
 
 
 /*
@@ -848,15 +969,6 @@ bool hay_asientos_libres(int cantidad_mesas, mesa_t *mesa, int *indice_mesa_con_
     return encontre_lugar;
 }
 
-
-/*
-Pre: maximo_valor debe ser si o si mayor o igual a minimo_valor
-Post: devuelve un numero aleatorio en el rango especificado.
-*/
-
-int generar_numero_aleatorio(int rango_maximo, int rango_minimo){
-    return ((rand() % rango_maximo) + rango_minimo); 
-}
 
 /*
 Pre:
@@ -974,7 +1086,10 @@ void realizar_jugada(juego_t *juego, char accion){
         interaccion_mopa(juego->mozo.posicion, juego);
     }else if(accion == PATINES){
         activar_patines(juego->mozo.cantidad_patines, juego, accion);
-    }else{
+    }else if(accion == TOMAR_PEDIDO){
+        interaccion_pedidos(juego->mozo.posicion, juego);
+    }
+    else{
         generar_nueva_accion_mozo(juego, accion);
     }
 

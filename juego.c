@@ -12,6 +12,7 @@
 #define DERECHA 'D'
 #define MOPA 'O'
 #define PATINES 'P'
+#define TOMAR_PEDIDO 'T'
 
 const int JUEGO_GANADO = 1;
 const int CONTINUAR_JUEGO = 0;
@@ -22,7 +23,7 @@ Post: Devuelve un booleano si la accion es igual a ARRIBA, ABAJO, DERECHA o MOPA
 */
 
 bool chequear_movimiento_ingresado(char accion){
-    return (accion ==  ARRIBA || accion == ABAJO || accion == DERECHA || accion == IZQUIERDA || accion == MOPA || accion == PATINES);
+    return (accion ==  ARRIBA || accion == ABAJO || accion == DERECHA || accion == IZQUIERDA || accion == MOPA || accion == PATINES || accion == TOMAR_PEDIDO);
 }
 
 /*
@@ -32,11 +33,11 @@ Post: Pregunta por una accion valida.
 
 char preguntar_accion(){
     char accion;
-    printf("\nIngrese un movimiento (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible) \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES);
+    printf("\nIngrese un movimiento (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible, %c: para tomar el pedido , es necesario estar a 1 posicion de distancia de una mesa):  \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES, TOMAR_PEDIDO);
     scanf(" %c",&accion);
 
     while(!chequear_movimiento_ingresado(accion)){
-        printf("Ingrese un movimiento VALIDO porfavor (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible): \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA);
+        printf("Ingrese un movimiento VALID( %c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible, %c: para tomar el pedido , es necesario estar a 1 posicion de distancia de una mesa):  \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES, TOMAR_PEDIDO);
         scanf(" %c",&accion);
     }
 
