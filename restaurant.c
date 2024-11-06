@@ -73,6 +73,16 @@ int distancia_manhattan(coordenada_t primera_posicion, coordenada_t segunda_posi
     return abs(primera_posicion.fil - segunda_posicion.fil) + abs(primera_posicion.col - segunda_posicion.col);
 }
 
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+bool estoy_en_misma_pos(coordenada_t posicion_1, coordenada_t posicion_2){
+    return posicion_1.fil == posicion_2.fil && posicion_1.col == posicion_2.col;
+}
 
 /*
 Pre: maximo_valor debe ser si o si mayor o igual a minimo_valor
@@ -349,6 +359,11 @@ void inicializar_cocina(bool tablero[MAX_FILAS][MAX_COLUMNAS], cocina_t *cocina)
             posicion_invalida = false;
         }
     }
+
+    cocina->cantidad_preparacion = 0;
+    cocina->cantidad_listos = 0;
+    cocina->platos_preparacion = NULL;
+    cocina->platos_listos = NULL;
 }
 
 /*
@@ -662,7 +677,8 @@ Post:
 
 void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
     for(int i = 0; i < *cantidad_obstaculos; i++ ){
-        if(obstaculos[i].tipo == CUCARACHA && obstaculos[i].posicion.fil == mozo.posicion.fil && obstaculos[i].posicion.col ==  mozo.posicion.col){
+        bool hay_cucaracha = estoy_en_misma_pos(mozo.posicion, obstaculos[i].posicion);
+        if(obstaculos[i].tipo == CUCARACHA && hay_cucaracha){
             obstaculos[i] = obstaculos[*cantidad_obstaculos - 1];
             (*cantidad_obstaculos)--;
             i--;
@@ -678,7 +694,8 @@ Post condiciones:
 
 void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *dinero){
     for(int i = 0; i < *cantidad_herramientas; i++ ){
-        if(herramientas[i].tipo == MONEDA && herramientas[i].posicion.fil == mozo->posicion.fil && herramientas[i].posicion.col ==  mozo->posicion.col){
+        bool hay_moneda = estoy_en_misma_pos(mozo->posicion, herramientas[i].posicion);
+        if(herramientas[i].tipo == MONEDA && hay_moneda){
             herramientas[i] = herramientas[*cantidad_herramientas - 1];
             (*cantidad_herramientas)--;
             (*dinero) += VALOR_MONEDA;
@@ -701,7 +718,8 @@ void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
     int i = 0;
 
     while(no_hay_patines && i < *cantidad_herramientas){
-        if(herramientas[i].tipo == PATINES && herramientas[i].posicion.fil == mozo->posicion.fil && herramientas[i].posicion.col == mozo->posicion.col){
+        bool hay_patines = estoy_en_misma_pos(mozo->posicion,herramientas[i].posicion);
+        if(herramientas[i].tipo == PATINES && hay_patines){
             herramientas[i] = herramientas[*cantidad_herramientas - 1];
             i--;
             no_hay_patines = false;
@@ -711,6 +729,110 @@ void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
             sleep(1);
         }
         i++;
+    }
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina) {
+    for (int i = 0; i < cocina->cantidad_listos; i++) {
+        mozo->bandeja[i] = cocina->platos_listos[i];
+        mozo->cantidad_bandeja++;
+    }
+    printf("Tienes %i pedidos listos en bandeja! \n", cocina->cantidad_listos);
+    sleep(1);
+    cocina->cantidad_listos = 0;
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void actualizar_pedidos(cocina_t *cocina) {
+    for (int i = 0; i < cocina->cantidad_preparacion; i++) {
+
+        cocina->platos_preparacion[i].tiempo_preparacion--;
+
+        if (cocina->platos_preparacion[i].tiempo_preparacion <= 0) {
+
+            cocina->platos_listos = realloc(cocina->platos_listos, (size_t)(cocina->cantidad_listos + 1) * sizeof(pedido_t));
+            if (cocina->platos_listos == NULL) {
+                return;
+            }
+
+            cocina->platos_listos[cocina->cantidad_listos] = cocina->platos_preparacion[i];
+            cocina->cantidad_listos++;
+            printf("El plato de la mesa %i esta listo! \n", cocina->platos_listos[i].id_mesa);
+            sleep(1);
+            for (int j = i; j < cocina->cantidad_preparacion - 1; j++) {
+                cocina->platos_preparacion[j] = cocina->platos_preparacion[j + 1]; 
+            }
+            cocina->cantidad_preparacion--;
+            i--;
+        }
+    }
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void encargar_pedidos(mozo_t *mozo, cocina_t *cocina) {
+    for (int i = 0; i < mozo->cantidad_pedidos; i++) {
+        cocina->platos_preparacion = realloc(cocina->platos_preparacion, (size_t)(cocina->cantidad_preparacion + 1) * sizeof(pedido_t));
+        if (cocina->platos_preparacion == NULL) {
+            return;
+        }
+        cocina->platos_preparacion[cocina->cantidad_preparacion] = mozo->pedidos[i];
+        cocina->cantidad_preparacion++;
+    }
+    printf("Encargaste %i pedidos! \n", mozo->cantidad_pedidos);
+    sleep(1);
+    mozo->cantidad_pedidos = 0;
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void manejo_de_pedidos(mozo_t *mozo, cocina_t *cocina) {
+    if(mozo->cantidad_pedidos > 0){
+        encargar_pedidos(mozo, cocina);
+    }
+    if(cocina->cantidad_listos > 0){
+        pedidos_en_bandeja(mozo, cocina);
+    }
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void interaccion_cocina(mozo_t *mozo, cocina_t *cocina){
+    if(!mozo->tiene_mopa ){
+        bool misma_posicion_cocina = estoy_en_misma_pos(mozo->posicion,cocina->posicion);
+        if(misma_posicion_cocina){
+            manejo_de_pedidos(mozo, cocina);
+        }
+    }else{
+        return;
     }
 }
 
@@ -731,6 +853,7 @@ void interaccion_herramientas(mozo_t *mozo, objeto_t herramientas[], int *cantid
     }
     
 }
+
 
 /*
 Pre condiciones:
@@ -789,25 +912,32 @@ Post:
 
 void generar_pedido(pedido_t pedidos[], int *cantidad_pedidos, mesa_t mesa, int indice_mesa) {
     int cantidad_platos_actual = 0;
-
+    int tiempo_de_preparacion_actual = 0;
     for(int i = 0; i < mesa.cantidad_comensales; i++) {
         int numero_pedido = generar_numero_aleatorio(4, 1);  
-
         if (numero_pedido == MILANESA_NAPOLITANA_ID) {
             pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = MILANESA_NAPOLITANA;
+            if(TIEMPO_MILANESA_NAPOLITANA > tiempo_de_preparacion_actual)
+                tiempo_de_preparacion_actual = TIEMPO_MILANESA_NAPOLITANA;
         } else if (numero_pedido == PARRILLA_ID) {
             pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = PARRILLA;
+            if(TIEMPO_PARRILLA > tiempo_de_preparacion_actual)
+                tiempo_de_preparacion_actual = TIEMPO_PARRILLA;
         } else if (numero_pedido == HAMBURGUESA_ID) {
             pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = HAMBURGUESA;
+            if(TIEMPO_HAMBURGUESA > tiempo_de_preparacion_actual)
+                tiempo_de_preparacion_actual = TIEMPO_HAMBURGUESA;
         } else {
             pedidos[*cantidad_pedidos].platos[cantidad_platos_actual] = RATATOUILLE;
+            if(TIEMPO_RATATOUILLE > tiempo_de_preparacion_actual)
+                tiempo_de_preparacion_actual = TIEMPO_RATATOUILLE;
         }
 
         cantidad_platos_actual++;
-        pedidos[*cantidad_pedidos].cantidad_platos = cantidad_platos_actual;
     }
-
+    pedidos[*cantidad_pedidos].tiempo_preparacion = tiempo_de_preparacion_actual;
     pedidos[*cantidad_pedidos].id_mesa = indice_mesa;
+    pedidos[*cantidad_pedidos].cantidad_platos = cantidad_platos_actual;
     (*cantidad_pedidos)++;
 }
 
@@ -923,6 +1053,7 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
 
         interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
         interaccion_herramientas(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->dinero);
+        interaccion_cocina(&juego->mozo, &juego->cocina);
 
         juego->movimientos++;
     }
@@ -1036,7 +1167,9 @@ void actualizacion_del_juego(juego_t *juego){
     if(juego->movimientos % 25 == 0 && juego->movimientos > 0){
         aparecer_cucarachas(juego);
     }
-    
+    if(juego->cocina.cantidad_preparacion > 0){
+        actualizar_pedidos(&juego->cocina);
+    }
 }
 
 
@@ -1105,4 +1238,9 @@ int estado_juego(juego_t juego){
         }
     }
     return CONTINUAR_JUGANDO;
+}
+
+void destruir_juego(juego_t *juego){
+    free(juego->cocina.platos_preparacion);
+    free(juego->cocina.platos_listos);
 }

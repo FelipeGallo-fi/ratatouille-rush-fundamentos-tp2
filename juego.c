@@ -61,10 +61,12 @@ int main(){
         }else if(juego_estado == JUEGO_GANADO){
             printf("Dia terminado! Felicitaciones has ganado!\n");
             sigue_el_juego = false;
+            destruir_juego(&juego);
         }else{
             printf("Dia terminado! Has perdido :(\n");
             sigue_el_juego = false;
-            }
+            destruir_juego(&juego);
+        }
     }
     
 
