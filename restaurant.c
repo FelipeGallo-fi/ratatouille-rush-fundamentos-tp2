@@ -6,11 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const int CANTIDAD_MESAS = 10;
-const int CANTIDAD_HERRAMIENTAS = 14;
-const int CANTIDAD_OBSTACULOS = 5;
-const int INDICE_MOPA = 0;
-
 #define MILANESA_NAPOLITANA 'M'
 #define HAMBURGUESA 'H'
 #define PARRILLA 'P'
@@ -40,19 +35,26 @@ const int INDICE_MOPA = 0;
 #define ASIENTO_OCUPADO 'X'
 #define CUCARACHA 'U'
 
+const int CANTIDAD_MESAS = 10;
+const int CANTIDAD_HERRAMIENTAS = 14;
+const int CANTIDAD_OBSTACULOS = 5;
+const int INDICE_MOPA = 0;
 const int VALOR_MONEDA = 1000;
 const int RANGO_PACIENCIA_MINIMA = 100;
 const int RANGO_PACIENCIA_MAXIMA = 101;
 const int GANO = 1;
 const int PERDIO = -1;
 const int CONTINUAR_JUGANDO = 0;
-const int OBJETIVO_DINERO = 150;
+const int OBJETIVO_DINERO = 150000;
 const int MAX_MOVIMIENTOS = 200;
 const int CANTIDAD_MONEDAS = 8;
 const int CANTIDAD_MOPAS = 1;
 const int CANTIDAD_PATINES = 5;
 const int CANTIDAD_CHARCOS = 5;
 const int DISTANCIA_CUCARACHA = 2;
+const int PRECIO_MESA_CUATRO = 20000;
+const int PRECIO_MESA_UNO = 5000;
+const int ERROR = -1;
 
 /*Structs utilizados*/
 
@@ -71,6 +73,20 @@ typedef struct mesa_aleat{
 
 int distancia_manhattan(coordenada_t primera_posicion, coordenada_t segunda_posicion){
     return abs(primera_posicion.fil - segunda_posicion.fil) + abs(primera_posicion.col - segunda_posicion.col);
+}
+
+/*
+* Pre: - 
+* Posts: 
+*/
+
+int buscar_indice_mopa(objeto_t herramientas[], int cantidad_herramientas){
+    for(int i = 0; i < cantidad_herramientas; i++){
+        if(herramientas[i].tipo == MOPA){
+            return i;
+        }
+    }
+    return ERROR;
 }
 
 /*
@@ -149,10 +165,6 @@ void asignar_posiciones(juego_t *juego,char mapa[MAX_FILAS][MAX_COLUMNAS]){
 
     for(int i = 0; i < juego->cantidad_obstaculos ; i++){
         mapa[juego->obstaculos[i].posicion.fil][juego->obstaculos[i].posicion.col] = juego->obstaculos[i].tipo;
-    }
-
-    if(juego->mozo.tiene_mopa == true){
-        mapa[juego->herramientas[0].posicion.fil][juego->herramientas[0].posicion.col] = VACIO;
     }
 
     mapa[juego->mozo.posicion.fil][juego->mozo.posicion.col] = LINGUINI;
@@ -488,7 +500,7 @@ bool puedo_soltar_mopa(coordenada_t posicion_mozo, juego_t *juego){
 
     bool es_accion_valida = true;
 
-    for(int i = 1; i < juego->cantidad_herramientas; i++){
+    for(int i = 0; i < juego->cantidad_herramientas; i++){
         if(juego->herramientas[i].posicion.fil == posicion_mozo.fil && juego->herramientas[i].posicion.col == posicion_mozo.col){
             es_accion_valida = false;
         }
@@ -508,6 +520,33 @@ bool puedo_soltar_mopa(coordenada_t posicion_mozo, juego_t *juego){
 }
 
 /*
+* Pre condiciones: 
+
+* Post condiciones:
+
+*/
+
+void eliminar_mopa(juego_t *juego, int indice) {
+    for (int i = indice; i < juego->cantidad_herramientas - 1; i++) {
+        juego->herramientas[i] = juego->herramientas[i + 1];
+    }
+    juego->cantidad_herramientas--; 
+}
+
+/*
+* Pre condiciones: 
+
+* Post condiciones:
+
+*/
+
+void agregar_mopa(juego_t *juego, objeto_t mopa) {
+    juego->herramientas[juego->cantidad_herramientas] = mopa;
+    juego->cantidad_herramientas++;
+}
+
+
+/*
 * Pre condiciones: La posicion del mozo debe estar inicializada.
 
 * Post condiciones: Realiza la accion relacionada con la mopa.
@@ -515,30 +554,26 @@ bool puedo_soltar_mopa(coordenada_t posicion_mozo, juego_t *juego){
 */
 
 void interaccion_mopa(coordenada_t posicion_mozo, juego_t *juego){
-
+    int indice_mopa = buscar_indice_mopa(juego->herramientas,juego->cantidad_herramientas);
     if(!juego->mozo.tiene_mopa){
-        if(juego->herramientas[INDICE_MOPA].posicion.fil == posicion_mozo.fil && juego->herramientas[INDICE_MOPA].posicion.col == posicion_mozo.col){
-            printf("\nMopa agarrada.\n");
-            sleep(1);
+        if(juego->herramientas[indice_mopa].posicion.fil == posicion_mozo.fil && juego->herramientas[indice_mopa].posicion.col == posicion_mozo.col){
             juego->mozo.tiene_mopa = true;
-            juego->movimientos++;
+            eliminar_mopa(juego, indice_mopa);
+            printf("\nMopa agarrada.\n");
         }else{
             printf("\nNo es posible agarrar la mopa.\n");
-            sleep(1);
         }
     }else if(juego->mozo.tiene_mopa){
         bool mopa_soltada = puedo_soltar_mopa(posicion_mozo, juego);
-
         if(!mopa_soltada){
             printf("\nNo es posible soltar la mopa sobre un espacio ocupado.\n");
-            sleep(1);
         }else{
-            printf("\nMopa soltada.\n");
-            sleep(1);
-            juego->herramientas[0].posicion.fil = posicion_mozo.fil;
-            juego->herramientas[0].posicion.col = posicion_mozo.col;
+            objeto_t mopa;
+            mopa.posicion = posicion_mozo;
+            mopa.tipo = MOPA;
+            agregar_mopa(juego, mopa);
             juego->mozo.tiene_mopa = false;
-            juego->movimientos++;
+            printf("\nMopa soltada.\n");
         }
     }
 }
@@ -611,14 +646,16 @@ Pre:
 Post:
 */
 
-void eliminar_pedido(pedido_t pedidos[], int *cantidad_pedidos, int indice_mesa) {
-
-    for (int i = 0; i < *cantidad_pedidos; i++) {
-        if (pedidos[i].id_mesa == indice_mesa) {
+void eliminar_pedido(pedido_t pedidos_o_bandeja[], int *cantidad_pedidos, int indice_mesa) {
+    int i = 0;
+    while (i < *cantidad_pedidos) {
+        if (pedidos_o_bandeja[i].id_mesa == indice_mesa) {
             for (int j = i; j < *cantidad_pedidos - 1; j++) {
-                pedidos[j] = pedidos[j + 1];
+                pedidos_o_bandeja[j] = pedidos_o_bandeja[j + 1];
             }
             (*cantidad_pedidos)--;
+        } else {
+            i++;
         }
     }
 }
@@ -636,18 +673,15 @@ void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
 
             mesas[i].paciencia--;
 
-            int distancia_cucaracha = distancia_de_cucaracha(juego, mesas[i]);
+            int distancia_mesa_cucaracha = distancia_de_cucaracha(juego, mesas[i]);
 
-            if(distancia_cucaracha <= DISTANCIA_CUCARACHA){
+            if(distancia_mesa_cucaracha <= DISTANCIA_CUCARACHA){
                 mesas[i].paciencia -= DISTANCIA_CUCARACHA;
             }
     
         }
         
         if(mesas[i].paciencia <= 0){
-            if(mesas[i].pedido_tomado){
-                eliminar_pedido(juego->mozo.pedidos, &juego->mozo.cantidad_pedidos, i);
-            }
             mesas[i].cantidad_comensales = 0;
         }
     }
@@ -692,6 +726,40 @@ Post condiciones:
 
 */
 
+void entregar_pedidos(mozo_t *mozo, mesa_t mesas[], int cantidad_mesas, juego_t *juego) {
+    for (int i = 0; i < cantidad_mesas; i++) {
+        int distancia_de_mesa = distancia_manhattan(mozo->posicion, *mesas[i].posicion);
+
+        if (distancia_de_mesa <= 1 && mesas[i].pedido_tomado) {
+            int j = 0;
+            bool pedido_entregado = false;
+
+            while (j < mozo->cantidad_bandeja && !pedido_entregado) {
+                if (mozo->bandeja[j].id_mesa == i) {
+                    mesas[i].pedido_tomado = false;
+                    eliminar_pedido(mozo->pedidos, &mozo->cantidad_bandeja, i);
+                    mesas[i].cantidad_comensales = 0;
+                    if (mesas[i].cantidad_lugares > 1) {
+                        juego->dinero += PRECIO_MESA_CUATRO;
+                    } else {
+                        juego->dinero += PRECIO_MESA_UNO;
+                    }
+                    pedido_entregado = true;
+                    printf("Pedido de la mesa %i entregado! \n", i);
+                }
+                j++; 
+            }
+        }
+    }
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
 void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *dinero){
     for(int i = 0; i < *cantidad_herramientas; i++ ){
         bool hay_moneda = estoy_en_misma_pos(mozo->posicion, herramientas[i].posicion);
@@ -700,7 +768,6 @@ void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
             (*cantidad_herramientas)--;
             (*dinero) += VALOR_MONEDA;
             printf("Moneda agarrada! \n");
-            sleep(1);
             i--;
         }
     }
@@ -726,7 +793,7 @@ void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
             (*cantidad_herramientas)--;
             mozo->cantidad_patines++;
             printf("Patines agarrados \n");
-            sleep(1);
+            
         }
         i++;
     }
@@ -739,14 +806,24 @@ Post condiciones:
 
 */
 
-void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina) {
-    for (int i = 0; i < cocina->cantidad_listos; i++) {
-        mozo->bandeja[i] = cocina->platos_listos[i];
+void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina){
+
+    int i = 0;
+    int espacio_libre = mozo->cantidad_bandeja;
+
+    while (i < cocina->cantidad_listos && espacio_libre < MAX_BANDEJA) {
+        mozo->bandeja[espacio_libre] = cocina->platos_listos[i];
         mozo->cantidad_bandeja++;
+        espacio_libre++;
+        i++;
     }
-    printf("Tienes %i pedidos listos en bandeja! \n", cocina->cantidad_listos);
-    sleep(1);
-    cocina->cantidad_listos = 0;
+
+    for (int j = i; j < cocina->cantidad_listos; j++) {
+        cocina->platos_listos[j - i] = cocina->platos_listos[j];
+    }
+    cocina->cantidad_listos -= i;
+
+    printf("Tienes %i pedidos listos en bandeja! \n", mozo->cantidad_bandeja);
 }
 
 /*
@@ -756,6 +833,7 @@ Post condiciones:
 
 */
 
+
 void actualizar_pedidos(cocina_t *cocina) {
     for (int i = 0; i < cocina->cantidad_preparacion; i++) {
 
@@ -763,19 +841,41 @@ void actualizar_pedidos(cocina_t *cocina) {
 
         if (cocina->platos_preparacion[i].tiempo_preparacion <= 0) {
 
-            cocina->platos_listos = realloc(cocina->platos_listos, (size_t)(cocina->cantidad_listos + 1) * sizeof(pedido_t));
+            if (cocina->cantidad_listos > 0) {
+                cocina->platos_listos = realloc(cocina->platos_listos, (size_t)(cocina->cantidad_listos + 1) * sizeof(pedido_t));
+            }else{
+                cocina->platos_listos = malloc(sizeof(pedido_t));
+            }
+
             if (cocina->platos_listos == NULL) {
+                printf("Error al reservar la memoria para los platos listos.\n");
                 return;
             }
 
             cocina->platos_listos[cocina->cantidad_listos] = cocina->platos_preparacion[i];
+
             cocina->cantidad_listos++;
-            printf("El plato de la mesa %i esta listo! \n", cocina->platos_listos[i].id_mesa);
-            sleep(1);
+
+            printf("El plato de la mesa %i está listo!\n", cocina->platos_listos[cocina->cantidad_listos - 1].id_mesa);
+
+            
+
             for (int j = i; j < cocina->cantidad_preparacion - 1; j++) {
-                cocina->platos_preparacion[j] = cocina->platos_preparacion[j + 1]; 
+                cocina->platos_preparacion[j] = cocina->platos_preparacion[j + 1];
             }
             cocina->cantidad_preparacion--;
+
+            if (cocina->cantidad_preparacion > 0) {
+                cocina->platos_preparacion = realloc(cocina->platos_preparacion, (size_t)(cocina->cantidad_preparacion + 1) * sizeof(pedido_t));
+            }else{
+                cocina->platos_preparacion = malloc(sizeof(pedido_t));
+            }
+            
+            if (cocina->platos_preparacion == NULL) {
+                printf("Error al liberar memoria en platos_preparacion.\n");
+                return;
+            }
+
             i--;
         }
     }
@@ -789,16 +889,18 @@ Post condiciones:
 */
 
 void encargar_pedidos(mozo_t *mozo, cocina_t *cocina) {
-    for (int i = 0; i < mozo->cantidad_pedidos; i++) {
-        cocina->platos_preparacion = realloc(cocina->platos_preparacion, (size_t)(cocina->cantidad_preparacion + 1) * sizeof(pedido_t));
-        if (cocina->platos_preparacion == NULL) {
-            return;
-        }
+    cocina->platos_preparacion = realloc(cocina->platos_preparacion, (size_t)(cocina->cantidad_preparacion + mozo->cantidad_pedidos) * sizeof(pedido_t));
+    if (cocina->platos_preparacion == NULL) {
+        printf("Error al reservar la memoria para los platos en preparación.\n");
+        return;
+    }
+    int i = 0;
+    while(i < mozo->cantidad_pedidos && cocina->cantidad_preparacion < MAX_BANDEJA){
         cocina->platos_preparacion[cocina->cantidad_preparacion] = mozo->pedidos[i];
         cocina->cantidad_preparacion++;
+        i++;
     }
-    printf("Encargaste %i pedidos! \n", mozo->cantidad_pedidos);
-    sleep(1);
+    printf("Encargaste %i pedidos!\n", mozo->cantidad_pedidos);
     mozo->cantidad_pedidos = 0;
 }
 
@@ -813,10 +915,11 @@ void manejo_de_pedidos(mozo_t *mozo, cocina_t *cocina) {
     if(mozo->cantidad_pedidos > 0){
         encargar_pedidos(mozo, cocina);
     }
-    if(cocina->cantidad_listos > 0){
+    if(cocina->cantidad_listos > 0 && mozo->cantidad_bandeja <= 6){
         pedidos_en_bandeja(mozo, cocina);
     }
 }
+
 
 /*
 Pre condiciones:
@@ -903,6 +1006,7 @@ void accion_mozo_patines(juego_t *juego, char accion) {
     }
     juego->movimientos++;
     juego->mozo.patines_puestos = false;
+    juego->mozo.cantidad_patines--;
 }
 
 /*
@@ -956,28 +1060,18 @@ Post:
 */
 
 void tomar_pedido(coordenada_t posicion_mozo, juego_t *juego) {
-    int i = 0;
-    bool pedido_tomado = false;
-
-    while (i < juego->cantidad_mesas && !pedido_tomado) {
-        if (juego->mesas[i].cantidad_comensales != 0) {
-
-            int j = 0;
-            while (j < juego->mesas[i].cantidad_comensales && !pedido_tomado) {
+    for (int i = 0; i < juego->cantidad_mesas; i++) {
+        if (juego->mesas[i].cantidad_comensales != 0 && !juego->mesas[i].pedido_tomado) {
+            for (int j = 0; j < juego->mesas[i].cantidad_comensales; j++) {
                 int distancia_mozo = distancia_mozo_mesa(posicion_mozo, juego->mesas[i].posicion[j]);
 
-                if (distancia_mozo <= 1) {
+                if (distancia_mozo <= 1 && juego->mozo.cantidad_pedidos < MAX_PEDIDOS ){
                     juego->mesas[i].pedido_tomado = true;
-                    pedido_tomado = true;
                     generar_pedido(juego->mozo.pedidos, &juego->mozo.cantidad_pedidos, juego->mesas[i], i);
-
-                    printf("Pedido tomado! \n");
-                    sleep(1);
+                    printf("Pedido tomado de la mesa %d!\n", i + 1);
                 }
-                j++;
             }
         }
-        i++;
     }
 }
 
@@ -995,20 +1089,27 @@ void activar_patines(int cantidad_patines, juego_t *juego, char accion){
         if(!juego->mozo.patines_puestos){
             juego->mozo.patines_puestos = true;
             printf("Patines activados! \n");
-            sleep(1);
+            
         }
     }else if(cantidad_patines <= 0){
         printf("No tienes patines disponibles! \n");
-        sleep(1);
+        
     }
 }
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
 
 void interaccion_pedidos(coordenada_t posicion_mozo, juego_t *juego){
     if(!juego->mozo.tiene_mopa){
         tomar_pedido(posicion_mozo, juego);
     }else{
         printf("No es posible tomar pedidos con la mopa agarrada. \n");
-        sleep(1);
+        
     }
 }
 
@@ -1054,6 +1155,7 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
         interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
         interaccion_herramientas(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->dinero);
         interaccion_cocina(&juego->mozo, &juego->cocina);
+        entregar_pedidos(&juego->mozo, juego->mesas, juego->cantidad_mesas, juego);
 
         juego->movimientos++;
     }
