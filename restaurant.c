@@ -194,7 +194,8 @@ void imprimir_juego(juego_t juego){
     }
 
 
-    printf("\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Pedidos tomados = %i, Pedidos en bandeja = %i, Patines disponibles = %i, Patines activados = %s , Mopa agarrada: %s\n", juego.dinero, juego.movimientos, juego.mozo.cantidad_pedidos, juego.mozo.cantidad_bandeja,juego.mozo.cantidad_patines, juego.mozo.patines_puestos ? "Sí" : "No", juego.mozo.tiene_mopa ? "Sí" : "No");
+    printf("\nINFORMACION \nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Patines disponibles = %i, Patines activados = %s , Mopa agarrada: %s\n", juego.dinero, juego.movimientos,juego.mozo.cantidad_patines, juego.mozo.patines_puestos ? "Sí" : "No", juego.mozo.tiene_mopa ? "Sí" : "No");
+    printf("\nPEDIDOS \nPedidos tomados = %i, Pedidos en preparacion: %i, Pedidos listos: %i, Pedidos en bandeja = %i. \n", juego.mozo.cantidad_pedidos,juego.cocina.cantidad_preparacion,juego.cocina.cantidad_listos ,juego.mozo.cantidad_bandeja);
 }
 
 /*
@@ -647,15 +648,11 @@ Post:
 */
 
 void eliminar_pedido(pedido_t pedidos_o_bandeja[], int *cantidad_pedidos, int indice_mesa) {
-    int i = 0;
-    while (i < *cantidad_pedidos) {
+    for (int i = 0; i < *cantidad_pedidos; i++) {
         if (pedidos_o_bandeja[i].id_mesa == indice_mesa) {
-            for (int j = i; j < *cantidad_pedidos - 1; j++) {
-                pedidos_o_bandeja[j] = pedidos_o_bandeja[j + 1];
-            }
-            (*cantidad_pedidos)--;
-        } else {
-            i++;
+            pedidos_o_bandeja[i] = pedidos_o_bandeja[*cantidad_pedidos - 1];
+            (*cantidad_pedidos)--; 
+            i--;
         }
     }
 }
@@ -683,6 +680,12 @@ void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
         
         if(mesas[i].paciencia <= 0){
             mesas[i].cantidad_comensales = 0;
+
+            if(mesas[i].pedido_tomado){
+                eliminar_pedido(juego->mozo.bandeja,&juego->mozo.cantidad_bandeja, i);
+            }else{
+                eliminar_pedido(juego->mozo.pedidos, &juego->mozo.cantidad_pedidos, i);
+            }
         }
     }
 
@@ -726,30 +729,68 @@ Post condiciones:
 
 */
 
+bool esta_cerca_del_mozo(mozo_t *mozo, mesa_t mesa, int comensal) {
+    int distancia = distancia_manhattan(mozo->posicion, mesa.posicion[comensal]);
+    return distancia <= 1;
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void procesar_entrega_pedido(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_mesa) {
+    int i = 0;
+    bool pedido_entregado = false;
+
+    while (i < mozo->cantidad_bandeja && !pedido_entregado && mozo->cantidad_bandeja > 0) {
+        if (mozo->bandeja[i].id_mesa == id_mesa) {
+            eliminar_pedido(mozo->bandeja, &mozo->cantidad_bandeja, id_mesa);
+            juego->dinero += (mesa->cantidad_lugares > 1) ? PRECIO_MESA_CUATRO : PRECIO_MESA_UNO;
+
+            mesa->pedido_tomado = false;
+            mesa->paciencia = 0;
+            mesa->cantidad_comensales = 0;
+            pedido_entregado = true;
+
+            printf("Pedido de la mesa %d entregado correctamente!\n", id_mesa);
+        }
+        i++;
+    }
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void entregar_pedidos_mesa(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_mesa) {
+    int j = 0;
+    bool puedo_entregar_pedido = false;
+    while (j < mesa->cantidad_comensales && !puedo_entregar_pedido){
+        bool mozo_cerca_mesa = esta_cerca_del_mozo(mozo, *mesa, j);
+        if (mozo_cerca_mesa && mesa->pedido_tomado) {
+            procesar_entrega_pedido(mozo, mesa, juego, id_mesa);
+            puedo_entregar_pedido = true;
+        }
+        j++;
+    }
+}
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
 void entregar_pedidos(mozo_t *mozo, mesa_t mesas[], int cantidad_mesas, juego_t *juego) {
     for (int i = 0; i < cantidad_mesas; i++) {
-        int distancia_de_mesa = distancia_manhattan(mozo->posicion, *mesas[i].posicion);
-
-        if (distancia_de_mesa <= 1 && mesas[i].pedido_tomado) {
-            int j = 0;
-            bool pedido_entregado = false;
-
-            while (j < mozo->cantidad_bandeja && !pedido_entregado) {
-                if (mozo->bandeja[j].id_mesa == i) {
-                    mesas[i].pedido_tomado = false;
-                    eliminar_pedido(mozo->pedidos, &mozo->cantidad_bandeja, i);
-                    mesas[i].cantidad_comensales = 0;
-                    if (mesas[i].cantidad_lugares > 1) {
-                        juego->dinero += PRECIO_MESA_CUATRO;
-                    } else {
-                        juego->dinero += PRECIO_MESA_UNO;
-                    }
-                    pedido_entregado = true;
-                    printf("Pedido de la mesa %i entregado! \n", i);
-                }
-                j++; 
-            }
-        }
+        entregar_pedidos_mesa(mozo, &mesas[i], juego, i);
     }
 }
 
@@ -806,8 +847,29 @@ Post condiciones:
 
 */
 
-void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina){
+void realocar_mem_platos(int cantidad_platos, pedido_t **platos) {
+    if (cantidad_platos > 0) {
+        pedido_t *aux_platos = realloc(*platos, (size_t)cantidad_platos * sizeof(pedido_t));
+        if (aux_platos == NULL) {
+            printf("Error al liberar memoria en platos_preparacion.\n");
+            return;
+        }
+        *platos = aux_platos; 
+    } else {
+        free(*platos);  
+        *platos = NULL;
+    }
+}
 
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina) {
     int i = 0;
     int espacio_libre = mozo->cantidad_bandeja;
 
@@ -817,13 +879,14 @@ void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina){
         espacio_libre++;
         i++;
     }
-
     for (int j = i; j < cocina->cantidad_listos; j++) {
         cocina->platos_listos[j - i] = cocina->platos_listos[j];
     }
-    cocina->cantidad_listos -= i;
 
-    printf("Tienes %i pedidos listos en bandeja! \n", mozo->cantidad_bandeja);
+    cocina->cantidad_listos -= i;
+    realocar_mem_platos(cocina->cantidad_listos, &cocina->platos_listos);
+
+    printf("Tienes %i pedidos listos en bandeja!\n", mozo->cantidad_bandeja);
 }
 
 /*
@@ -836,45 +899,29 @@ Post condiciones:
 
 void actualizar_pedidos(cocina_t *cocina) {
     for (int i = 0; i < cocina->cantidad_preparacion; i++) {
-
+        
         cocina->platos_preparacion[i].tiempo_preparacion--;
 
         if (cocina->platos_preparacion[i].tiempo_preparacion <= 0) {
 
-            if (cocina->cantidad_listos > 0) {
-                cocina->platos_listos = realloc(cocina->platos_listos, (size_t)(cocina->cantidad_listos + 1) * sizeof(pedido_t));
-            }else{
-                cocina->platos_listos = malloc(sizeof(pedido_t));
-            }
-
-            if (cocina->platos_listos == NULL) {
-                printf("Error al reservar la memoria para los platos listos.\n");
+            pedido_t *aux_platos_listos = realloc(cocina->platos_listos, (size_t)(cocina->cantidad_listos + 1) * sizeof(pedido_t));
+            if (aux_platos_listos == NULL) {
+                printf("Error al reservar memoria para platos listos.\n");
                 return;
             }
+            cocina->platos_listos = aux_platos_listos;
 
             cocina->platos_listos[cocina->cantidad_listos] = cocina->platos_preparacion[i];
-
             cocina->cantidad_listos++;
-
             printf("El plato de la mesa %i está listo!\n", cocina->platos_listos[cocina->cantidad_listos - 1].id_mesa);
-
-            
 
             for (int j = i; j < cocina->cantidad_preparacion - 1; j++) {
                 cocina->platos_preparacion[j] = cocina->platos_preparacion[j + 1];
             }
+
             cocina->cantidad_preparacion--;
 
-            if (cocina->cantidad_preparacion > 0) {
-                cocina->platos_preparacion = realloc(cocina->platos_preparacion, (size_t)(cocina->cantidad_preparacion + 1) * sizeof(pedido_t));
-            }else{
-                cocina->platos_preparacion = malloc(sizeof(pedido_t));
-            }
-            
-            if (cocina->platos_preparacion == NULL) {
-                printf("Error al liberar memoria en platos_preparacion.\n");
-                return;
-            }
+            realocar_mem_platos(cocina->cantidad_preparacion, &cocina->platos_preparacion);
 
             i--;
         }
@@ -889,19 +936,25 @@ Post condiciones:
 */
 
 void encargar_pedidos(mozo_t *mozo, cocina_t *cocina) {
-    cocina->platos_preparacion = realloc(cocina->platos_preparacion, (size_t)(cocina->cantidad_preparacion + mozo->cantidad_pedidos) * sizeof(pedido_t));
+    int pedidos_encargados = mozo->cantidad_pedidos;
+
+    cocina->platos_preparacion = realloc(cocina->platos_preparacion, 
+        (size_t)(pedidos_encargados) * sizeof(pedido_t));
+    
     if (cocina->platos_preparacion == NULL) {
         printf("Error al reservar la memoria para los platos en preparación.\n");
         return;
     }
+
     int i = 0;
-    while(i < mozo->cantidad_pedidos && cocina->cantidad_preparacion < MAX_BANDEJA){
+    while (i < pedidos_encargados && cocina->cantidad_preparacion < MAX_BANDEJA) {
         cocina->platos_preparacion[cocina->cantidad_preparacion] = mozo->pedidos[i];
+        eliminar_pedido(mozo->pedidos, &mozo->cantidad_pedidos, mozo->pedidos[i].id_mesa);
         cocina->cantidad_preparacion++;
         i++;
     }
-    printf("Encargaste %i pedidos!\n", mozo->cantidad_pedidos);
-    mozo->cantidad_pedidos = 0;
+
+    printf("Encargaste %i pedidos!\n", pedidos_encargados);
 }
 
 /*
@@ -939,6 +992,25 @@ void interaccion_cocina(mozo_t *mozo, cocina_t *cocina){
     }
 }
 
+
+/*
+Pre condiciones:
+
+Post condiciones: 
+
+*/
+
+void interaccion_charcos_bandeja(mozo_t *mozo, objeto_t obstaculos[], int *cantidad_obstaculos, mesa_t mesas[]) {
+    for (int i = 0; i < *cantidad_obstaculos; i++) {
+        if (mozo->posicion.fil == obstaculos[i].posicion.fil && mozo->posicion.col == obstaculos[i].posicion.col && obstaculos[i].tipo == CHARCO) {
+            for (int j = mozo->cantidad_bandeja - 1; j >= 0; j--){
+                mesas[mozo->bandeja[j].id_mesa].cantidad_comensales = 0;
+                eliminar_pedido(mozo->bandeja, &mozo->cantidad_bandeja, mozo->bandeja[j].id_mesa);
+            }
+        }
+    }
+}
+
 /*
 Pre condiciones:
 
@@ -965,11 +1037,14 @@ Post condiciones:
 
 */
 
-void interaccion_obstaculos(mozo_t *mozo, objeto_t obstaculos[], int *cantidad_obstaculos) {
+void interaccion_obstaculos(mozo_t *mozo, objeto_t obstaculos[], int *cantidad_obstaculos, mesa_t mesas[]) {
 
     if(mozo->tiene_mopa){
         interaccion_charcos(*mozo, obstaculos, cantidad_obstaculos);
     }else{
+        if(mozo->cantidad_bandeja > 0){
+            interaccion_charcos_bandeja(mozo, obstaculos, cantidad_obstaculos, mesas);
+        }
         interaccion_cucaracha(*mozo, obstaculos, cantidad_obstaculos);
     }
 }
@@ -999,7 +1074,7 @@ void accion_mozo_patines(juego_t *juego, char accion) {
         movimiento_valido = es_accion_valida_mozo(posicion_actual_mozo, *juego);
 
         if(movimiento_valido){
-            interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+            interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos, juego->mesas);
             interaccion_herramientas(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->dinero);
             juego->mozo.posicion = posicion_actual_mozo; 
         }
@@ -1085,6 +1160,10 @@ Post condiciones:
 */
 
 void activar_patines(int cantidad_patines, juego_t *juego, char accion){
+    if(juego->mozo.tiene_mopa){
+        printf("No puede activar los patines con la mopa! \n");
+        return;
+    }
     if(cantidad_patines > 0){
         if(!juego->mozo.patines_puestos){
             juego->mozo.patines_puestos = true;
@@ -1152,11 +1231,15 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
         juego->mozo.posicion.fil = posicion_actual_mozo_mod.fil;
         juego->mozo.posicion.col = posicion_actual_mozo_mod.col;
 
-        interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos);
+        interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos, juego->mesas);
         interaccion_herramientas(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->dinero);
         interaccion_cocina(&juego->mozo, &juego->cocina);
-        entregar_pedidos(&juego->mozo, juego->mesas, juego->cantidad_mesas, juego);
-
+        if(juego->cocina.cantidad_preparacion > 0){
+            actualizar_pedidos(&juego->cocina);
+        }
+        if(!juego->mozo.tiene_mopa){
+            entregar_pedidos(&juego->mozo, juego->mesas, juego->cantidad_mesas, juego);
+        }
         juego->movimientos++;
     }
 }
@@ -1268,9 +1351,6 @@ void actualizacion_del_juego(juego_t *juego){
     }
     if(juego->movimientos % 25 == 0 && juego->movimientos > 0){
         aparecer_cucarachas(juego);
-    }
-    if(juego->cocina.cantidad_preparacion > 0){
-        actualizar_pedidos(&juego->cocina);
     }
 }
 
