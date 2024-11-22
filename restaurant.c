@@ -36,9 +36,13 @@
 #define CUCARACHA 'U'
 
 const int CANTIDAD_MESAS = 10;
+const int LLEGADA_COMENSALES = 15;
+const int APARECEN_CUCARACHAS = 25;
 const int CANTIDAD_HERRAMIENTAS = 14;
 const int CANTIDAD_OBSTACULOS = 5;
 const int INDICE_MOPA = 0;
+const int MAX_LUGARES = 4;
+const int MIN_LUGARES = 1;
 const int VALOR_MONEDA = 1000;
 const int RANGO_PACIENCIA_MINIMA = 100;
 const int RANGO_PACIENCIA_MAXIMA = 101;
@@ -76,23 +80,23 @@ int distancia_manhattan(coordenada_t primera_posicion, coordenada_t segunda_posi
 }
 
 /*
-* Pre: - 
-* Posts: 
+* Pre: Herramientas debe estar correctamente incializado. Cantidad de herramientas debe ser mayor a cero.
+* Posts: Devuelve el indice de la mopa. Si no hay un objeto del tipo mopa devuelve menos 1.
 */
 
 int buscar_indice_mopa(objeto_t herramientas[], int cantidad_herramientas){
+    int indice_mopa = -1;
     for(int i = 0; i < cantidad_herramientas; i++){
         if(herramientas[i].tipo == MOPA){
-            return i;
+            indice_mopa = i;
         }
     }
-    return ERROR;
+    return indice_mopa;
 }
 
 /*
-Pre condiciones:
-
-Post condiciones: 
+Pre condiciones: posicion 1 y 2 deben tener las coordenadas inicializadas.
+Post condiciones: devuelve true si las coordenadas son iguales y false en caso contrario.
 
 */
 
@@ -194,8 +198,8 @@ void imprimir_juego(juego_t juego){
     }
 
 
-    printf("\nINFORMACION \nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Patines disponibles = %i, Patines activados = %s , Mopa agarrada: %s\n", juego.dinero, juego.movimientos,juego.mozo.cantidad_patines, juego.mozo.patines_puestos ? "Sí" : "No", juego.mozo.tiene_mopa ? "Sí" : "No");
-    printf("\nPEDIDOS \nPedidos tomados = %i, Pedidos en preparacion: %i, Pedidos listos: %i, Pedidos en bandeja = %i. \n", juego.mozo.cantidad_pedidos,juego.cocina.cantidad_preparacion,juego.cocina.cantidad_listos ,juego.mozo.cantidad_bandeja);
+    printf("\nINFORMACION \nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Patines disponibles = %i, Patines activados = %s , El mozo tiene la mopa: %s\n", juego.dinero, juego.movimientos,juego.mozo.cantidad_patines, juego.mozo.patines_puestos ? "Sí" : "No", juego.mozo.tiene_mopa ? "Sí" : "No");
+    printf("\nPEDIDOS \nPedidos tomados (encargar en la cocina) = %i, Pedidos en preparacion (en la cocina): %i, Pedidos listos (en la cocina): %i, Pedidos en bandeja (para entregar) = %i. \n", juego.mozo.cantidad_pedidos,juego.cocina.cantidad_preparacion,juego.cocina.cantidad_listos ,juego.mozo.cantidad_bandeja);
 }
 
 /*
@@ -268,9 +272,9 @@ mesa_aleat_t generar_mesa(int i){
     valores_mesa_aleatoria.coordenada.fil = rand() % MAX_FILAS;
     valores_mesa_aleatoria.coordenada.col = rand() % MAX_COLUMNAS;
     if (i < 4) {
-        valores_mesa_aleatoria.cantidad_lugares = 4;
+        valores_mesa_aleatoria.cantidad_lugares = MAX_LUGARES;
     } else {
-        valores_mesa_aleatoria.cantidad_lugares = 1; 
+        valores_mesa_aleatoria.cantidad_lugares = MIN_LUGARES; 
     }
 
     return valores_mesa_aleatoria;
@@ -521,12 +525,9 @@ bool puedo_soltar_mopa(coordenada_t posicion_mozo, juego_t *juego){
 }
 
 /*
-* Pre condiciones: 
-
-* Post condiciones:
-
+* Pre condiciones: Herramientas debe estar correctamente inciliazado e indice debe ser un valor no negativo y menor que cantidad_herramientas
+Post condiciones:La herramienta en la posición de indice será eliminada de herramientas. Todos los elementos de herramientas se moveran una posicion a la derecha
 */
-
 void eliminar_mopa(juego_t *juego, int indice) {
     for (int i = indice; i < juego->cantidad_herramientas - 1; i++) {
         juego->herramientas[i] = juego->herramientas[i + 1];
@@ -535,12 +536,10 @@ void eliminar_mopa(juego_t *juego, int indice) {
 }
 
 /*
-* Pre condiciones: 
-
-* Post condiciones:
-
+Pre condiciones: Herramientas debe estar corrrectamente incializado. Cantidad de herramientas debe ser menor que el maximo de elementos que contiene herramientas. Mopa debe estar correctamente inicializado.
+* Post condiciones: Se agrega la mopa a herramientas en la posición del tope que seria cantidad herramientas. 
+Se incrementa en uno el tope.
 */
-
 void agregar_mopa(juego_t *juego, objeto_t mopa) {
     juego->herramientas[juego->cantidad_herramientas] = mopa;
     juego->cantidad_herramientas++;
@@ -560,21 +559,15 @@ void interaccion_mopa(coordenada_t posicion_mozo, juego_t *juego){
         if(juego->herramientas[indice_mopa].posicion.fil == posicion_mozo.fil && juego->herramientas[indice_mopa].posicion.col == posicion_mozo.col){
             juego->mozo.tiene_mopa = true;
             eliminar_mopa(juego, indice_mopa);
-            printf("\nMopa agarrada.\n");
-        }else{
-            printf("\nNo es posible agarrar la mopa.\n");
         }
     }else if(juego->mozo.tiene_mopa){
         bool mopa_soltada = puedo_soltar_mopa(posicion_mozo, juego);
-        if(!mopa_soltada){
-            printf("\nNo es posible soltar la mopa sobre un espacio ocupado.\n");
-        }else{
+        if(mopa_soltada){
             objeto_t mopa;
             mopa.posicion = posicion_mozo;
             mopa.tipo = MOPA;
             agregar_mopa(juego, mopa);
             juego->mozo.tiene_mopa = false;
-            printf("\nMopa soltada.\n");
         }
     }
 }
@@ -584,7 +577,7 @@ Pre:
 Post:
 */
 
-bool hay_posicion_libre(juego_t juego, coordenada_t posicion){
+bool es_posicion_libre(juego_t juego, coordenada_t posicion){
     bool hay_lugar = true;
 
     for(int i = 0; i < juego.cantidad_mesas; i++){
@@ -754,8 +747,6 @@ void procesar_entrega_pedido(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_
             mesa->paciencia = 0;
             mesa->cantidad_comensales = 0;
             pedido_entregado = true;
-
-            printf("Pedido de la mesa %d entregado correctamente!\n", id_mesa);
         }
         i++;
     }
@@ -808,7 +799,6 @@ void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
             herramientas[i] = herramientas[*cantidad_herramientas - 1];
             (*cantidad_herramientas)--;
             (*dinero) += VALOR_MONEDA;
-            printf("Moneda agarrada! \n");
             i--;
         }
     }
@@ -833,7 +823,6 @@ void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
             no_hay_patines = false;
             (*cantidad_herramientas)--;
             mozo->cantidad_patines++;
-            printf("Patines agarrados \n");
             
         }
         i++;
@@ -886,7 +875,6 @@ void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina) {
     cocina->cantidad_listos -= i;
     realocar_mem_platos(cocina->cantidad_listos, &cocina->platos_listos);
 
-    printf("Tienes %i pedidos listos en bandeja!\n", mozo->cantidad_bandeja);
 }
 
 /*
@@ -913,7 +901,6 @@ void actualizar_pedidos(cocina_t *cocina) {
 
             cocina->platos_listos[cocina->cantidad_listos] = cocina->platos_preparacion[i];
             cocina->cantidad_listos++;
-            printf("El plato de la mesa %i está listo!\n", cocina->platos_listos[cocina->cantidad_listos - 1].id_mesa);
 
             for (int j = i; j < cocina->cantidad_preparacion - 1; j++) {
                 cocina->platos_preparacion[j] = cocina->platos_preparacion[j + 1];
@@ -953,18 +940,17 @@ void encargar_pedidos(mozo_t *mozo, cocina_t *cocina) {
         cocina->cantidad_preparacion++;
         i++;
     }
-
-    printf("Encargaste %i pedidos!\n", pedidos_encargados);
 }
+
 
 /*
 Pre condiciones:
 
 Post condiciones: 
-
 */
 
-void manejo_de_pedidos(mozo_t *mozo, cocina_t *cocina) {
+void gestionar_pedidos_mozo(mozo_t *mozo, cocina_t *cocina) {
+    
     if(mozo->cantidad_pedidos > 0){
         encargar_pedidos(mozo, cocina);
     }
@@ -985,7 +971,7 @@ void interaccion_cocina(mozo_t *mozo, cocina_t *cocina){
     if(!mozo->tiene_mopa ){
         bool misma_posicion_cocina = estoy_en_misma_pos(mozo->posicion,cocina->posicion);
         if(misma_posicion_cocina){
-            manejo_de_pedidos(mozo, cocina);
+            gestionar_pedidos_mozo(mozo, cocina);
         }
     }else{
         return;
@@ -1143,7 +1129,6 @@ void tomar_pedido(coordenada_t posicion_mozo, juego_t *juego) {
                 if (distancia_mozo <= 1 && juego->mozo.cantidad_pedidos < MAX_PEDIDOS ){
                     juego->mesas[i].pedido_tomado = true;
                     generar_pedido(juego->mozo.pedidos, &juego->mozo.cantidad_pedidos, juego->mesas[i], i);
-                    printf("Pedido tomado de la mesa %d!\n", i + 1);
                 }
             }
         }
@@ -1161,18 +1146,12 @@ Post condiciones:
 
 void activar_patines(int cantidad_patines, juego_t *juego, char accion){
     if(juego->mozo.tiene_mopa){
-        printf("No puede activar los patines con la mopa! \n");
         return;
     }
     if(cantidad_patines > 0){
         if(!juego->mozo.patines_puestos){
             juego->mozo.patines_puestos = true;
-            printf("Patines activados! \n");
-            
         }
-    }else if(cantidad_patines <= 0){
-        printf("No tienes patines disponibles! \n");
-        
     }
 }
 
@@ -1186,9 +1165,6 @@ Post condiciones:
 void interaccion_pedidos(coordenada_t posicion_mozo, juego_t *juego){
     if(!juego->mozo.tiene_mopa){
         tomar_pedido(posicion_mozo, juego);
-    }else{
-        printf("No es posible tomar pedidos con la mopa agarrada. \n");
-        
     }
 }
 
@@ -1233,10 +1209,10 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
 
         interaccion_obstaculos(&juego->mozo, juego->obstaculos, &juego->cantidad_obstaculos, juego->mesas);
         interaccion_herramientas(&juego->mozo, juego->herramientas, &juego->cantidad_herramientas, &juego->dinero);
-        interaccion_cocina(&juego->mozo, &juego->cocina);
         if(juego->cocina.cantidad_preparacion > 0){
             actualizar_pedidos(&juego->cocina);
         }
+        interaccion_cocina(&juego->mozo, &juego->cocina);
         if(!juego->mozo.tiene_mopa){
             entregar_pedidos(&juego->mozo, juego->mesas, juego->cantidad_mesas, juego);
         }
@@ -1314,7 +1290,7 @@ void aparecer_cucarachas(juego_t *juego){
 
     while(posicion_invalida){
         posicion_aleatoria = generar_posicion_aleatoria();
-        bool encontre_posicion = hay_posicion_libre(*juego, posicion_aleatoria);
+        bool encontre_posicion = es_posicion_libre(*juego, posicion_aleatoria);
         if(encontre_posicion){
             juego->obstaculos[juego->cantidad_obstaculos].posicion.fil = posicion_aleatoria.fil;
             juego->obstaculos[juego->cantidad_obstaculos].posicion.col = posicion_aleatoria.col;
@@ -1341,15 +1317,19 @@ void llegada_comensales(juego_t *juego){
 
 
 /*
-Pre:
-Post:
-*/
+Pre: 
+- El puntero 'juego' debe apuntar a una estructura de tipo 'juego_t' válida y correctamente inicializada.
+- Las constantes 'LLEGADA_COMENSALES' y 'APARECEN_CUCARACHAS' deben estar definidas y ser mayores a 0.
 
+Post: 
+- Si el número de movimientos en el juego es múltiplo de 'LLEGADA_COMENSALES' y mayor a 0, se llamará a la función 'llegada_comensales'.
+- Si el número de movimientos en el juego es múltiplo de 'APARECEN_CUCARACHAS' y mayor a 0, se llamará a la función 'aparecer_cucarachas'.
+*/
 void actualizacion_del_juego(juego_t *juego){
-    if(juego->movimientos % 15 == 0 && juego->movimientos > 0){
+    if(juego->movimientos % LLEGADA_COMENSALES == 0 && juego->movimientos > 0){
         llegada_comensales(juego);
     }
-    if(juego->movimientos % 25 == 0 && juego->movimientos > 0){
+    if(juego->movimientos % APARECEN_CUCARACHAS == 0 && juego->movimientos > 0){
         aparecer_cucarachas(juego);
     }
 }

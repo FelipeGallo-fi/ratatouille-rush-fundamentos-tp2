@@ -22,7 +22,7 @@ Pre: Accion y las constantes deben estar previamente incializados.
 Post: Devuelve un booleano si la accion es igual a ARRIBA, ABAJO, DERECHA o MOPA.
 */
 
-bool chequear_movimiento_ingresado(char accion){
+bool es_movimiento_valido(char accion){
     return (accion ==  ARRIBA || accion == ABAJO || accion == DERECHA || accion == IZQUIERDA || accion == MOPA || accion == PATINES || accion == TOMAR_PEDIDO);
 }
 
@@ -36,7 +36,7 @@ char preguntar_accion(){
     printf("\nIngrese un movimiento (%c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible, %c: para tomar el pedido de una mesa ocupada , es necesario estar a 1 posicion de distancia de una mesa):  \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES, TOMAR_PEDIDO);
     scanf(" %c",&accion);
 
-    while(!chequear_movimiento_ingresado(accion)){
+    while(!es_movimiento_valido(accion)){
         printf("Ingrese un movimiento VALID( %c: arriba, %c: izquierda, %c: abajo, %c: derecha, %c: para agarrar la mopa, de ser posible, %c: para agarrar los patines, de ser posible, %c: para tomar el pedido , es necesario estar a 1 posicion de distancia de una mesa):  \n", ARRIBA, ABAJO, IZQUIERDA, DERECHA, MOPA, PATINES, TOMAR_PEDIDO);
         scanf(" %c",&accion);
     }
