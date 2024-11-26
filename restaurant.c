@@ -72,10 +72,9 @@ typedef struct mesa_aleat{
 /*Mis funciones*/
 
 /*
-* Pre: - 
-* Posts: Inicializa todos los valores como false.
+* Pre: Primera posicion y segunda posicion deben estar inicializadas.
+* Posts: Devuelve al distancia manhattan de ambas posiciones.
 */
-
 int distancia_manhattan(coordenada_t primera_posicion, coordenada_t segunda_posicion){
     return abs(primera_posicion.fil - segunda_posicion.fil) + abs(primera_posicion.col - segunda_posicion.col);
 }
@@ -84,7 +83,6 @@ int distancia_manhattan(coordenada_t primera_posicion, coordenada_t segunda_posi
 * Pre: Herramientas debe estar correctamente incializado. Cantidad de herramientas debe ser mayor a cero.
 * Posts: Devuelve el indice de la mopa. Si no hay un objeto del tipo mopa devuelve menos 1.
 */
-
 int buscar_indice_mopa(objeto_t herramientas[], int cantidad_herramientas){
     int indice_mopa = -1;
     for(int i = 0; i < cantidad_herramientas; i++){
@@ -100,7 +98,6 @@ Pre condiciones: posicion 1 y 2 deben tener las coordenadas inicializadas.
 Post condiciones: devuelve true si las coordenadas son iguales y false en caso contrario.
 
 */
-
 bool estoy_en_misma_pos(coordenada_t posicion_1, coordenada_t posicion_2){
     return posicion_1.fil == posicion_2.fil && posicion_1.col == posicion_2.col;
 }
@@ -109,7 +106,6 @@ bool estoy_en_misma_pos(coordenada_t posicion_1, coordenada_t posicion_2){
 Pre: maximo_valor debe ser si o si mayor o igual a minimo_valor
 Post: devuelve un numero aleatorio en el rango especificado.
 */
-
 int generar_numero_aleatorio(int rango_maximo, int rango_minimo){
     return ((rand() % rango_maximo) + rango_minimo); 
 }
@@ -119,7 +115,6 @@ int generar_numero_aleatorio(int rango_maximo, int rango_minimo){
 * Pre: - 
 * Posts: Inicializa todos los valores como false.
 */
-
 void inicializar_tablero(bool tablero[MAX_FILAS][MAX_COLUMNAS]) {
     for (int i = 0; i < MAX_FILAS; i++) {
         for (int j = 0; j < MAX_COLUMNAS; j++) {
@@ -134,7 +129,6 @@ void inicializar_tablero(bool tablero[MAX_FILAS][MAX_COLUMNAS]) {
 * Post condiciones: Inicializa todos los valores del mapa como VACIO.
 
 */
-
 void inicializar_mapa(char mapa[MAX_FILAS][MAX_COLUMNAS]){
     for (int i = 0; i < MAX_FILAS; i++) {
         for (int j = 0; j < MAX_COLUMNAS; j++) {
@@ -150,7 +144,6 @@ void inicializar_mapa(char mapa[MAX_FILAS][MAX_COLUMNAS]){
 * Post condiciones: Asigna las posiciones de los elementos de juego en la matriz mapa recibida por parametro.
 
 */
-
 void asignar_posiciones(juego_t *juego,char mapa[MAX_FILAS][MAX_COLUMNAS]){
 
     for(int i = 0; i < juego->cantidad_mesas; i++){
@@ -183,7 +176,6 @@ void asignar_posiciones(juego_t *juego,char mapa[MAX_FILAS][MAX_COLUMNAS]){
 * Post condiciones: Muestra el mapa y los datos importantes del juego por pantalla.
 
 */
-
 void imprimir_juego(juego_t juego){
 
     char mapa[MAX_FILAS][MAX_COLUMNAS];
@@ -209,7 +201,6 @@ void imprimir_juego(juego_t juego){
 * Post condiciones: Devuelve true si la posicion de la mesa es valida, false en caso contrario.
 
 */
-
 bool es_mesa_valida(mesa_aleat_t valores_mesa, bool tablero[MAX_FILAS][MAX_COLUMNAS]){
 
     bool es_valida = true;
@@ -249,7 +240,6 @@ bool es_mesa_valida(mesa_aleat_t valores_mesa, bool tablero[MAX_FILAS][MAX_COLUM
 * Pre: La posicion y el tablero deben estar inicializados.
 * Post: Devuelve true si la posicion es valida, false en caso contrario.
 */
-
 bool es_posicion_valida(coordenada_t posicion_aleatoria, bool tablero[MAX_FILAS][MAX_COLUMNAS]){
     int i = posicion_aleatoria.fil;
     int j = posicion_aleatoria.col;
@@ -267,7 +257,6 @@ bool es_posicion_valida(coordenada_t posicion_aleatoria, bool tablero[MAX_FILAS]
 * Post condiciones:Crea la posicion inicial para una mesa.  Si i es menor a 4 asigna una mesa de 4 comensales, si i es mayor o igual a 4 asigna una mesa de 1 comensal. 
 
 */
-
 mesa_aleat_t generar_mesa(int i){
     mesa_aleat_t valores_mesa_aleatoria ;
     valores_mesa_aleatoria.coordenada.fil = rand() % MAX_FILAS;
@@ -285,7 +274,6 @@ mesa_aleat_t generar_mesa(int i){
 * Pre: valores_mesa debe estar inicializado.
 * Post: Inicializa el struct mesa.
 */
-
 void asignar_mesa(mesa_t *mesa, mesa_aleat_t valores_mesa) {
     if(valores_mesa.cantidad_lugares == 1){
         mesa->posicion[0].fil = valores_mesa.coordenada.fil;
@@ -316,7 +304,6 @@ void asignar_mesa(mesa_t *mesa, mesa_aleat_t valores_mesa) {
 * Post condiciones: Crea una valor aleatorio en el rango de MAX_FILAS y MAX_COLUMNAS, creando una fila y columna aleatoria. 
 
 */
-
 coordenada_t generar_posicion_aleatoria(){
     coordenada_t posicion_aleatoria ;
     posicion_aleatoria.fil = rand() % MAX_FILAS;
@@ -330,7 +317,6 @@ coordenada_t generar_posicion_aleatoria(){
 * Post condiciones: Inicializa las mesas.
 
 */
-
 void inicializar_mesas(bool tablero[MAX_FILAS][MAX_COLUMNAS], juego_t *juego){
 
     
@@ -359,7 +345,6 @@ void inicializar_mesas(bool tablero[MAX_FILAS][MAX_COLUMNAS], juego_t *juego){
 * Post condiciones: Inicializa la cocina.
 
 */
-
 void inicializar_cocina(bool tablero[MAX_FILAS][MAX_COLUMNAS], cocina_t *cocina){
     
     coordenada_t posicion_aleatoria_cocina;
@@ -390,7 +375,6 @@ void inicializar_cocina(bool tablero[MAX_FILAS][MAX_COLUMNAS], cocina_t *cocina)
 * Post condiciones: Inicializa un objeto.
 
 */
-
 void inicializar_objetos(bool tablero[MAX_FILAS][MAX_COLUMNAS], char tipo, objeto_t *objeto){
         bool es_pos_valida_objetos;
         bool posicion_invalida = true;
@@ -411,7 +395,6 @@ void inicializar_objetos(bool tablero[MAX_FILAS][MAX_COLUMNAS], char tipo, objet
 
 * Post condiciones: Inicializa los elementos de herramientas.
 */
-
 void inicializar_herramientas(bool tablero[MAX_FILAS][MAX_COLUMNAS], juego_t *juego){
     for(int i = 0; i < juego->cantidad_herramientas ; i++){
         if( i == 0){
@@ -430,7 +413,6 @@ void inicializar_herramientas(bool tablero[MAX_FILAS][MAX_COLUMNAS], juego_t *ju
 * Post condiciones: Inicializa los obstaculos.
 
 */
-
 void inicializar_obstaculos(bool tablero[MAX_FILAS][MAX_COLUMNAS], juego_t *juego){
     for(int i = 0; i < juego->cantidad_obstaculos ; i++){
         inicializar_objetos(tablero, CHARCO, &juego->obstaculos[i]);
@@ -443,7 +425,6 @@ void inicializar_obstaculos(bool tablero[MAX_FILAS][MAX_COLUMNAS], juego_t *jueg
 * Post condiciones: Inicializa el mozo.
 
 */
-
 void inicializar_mozo(bool tablero[MAX_FILAS][MAX_COLUMNAS], mozo_t *mozo){
     
     coordenada_t posicion_aleatoria_mozo;
@@ -475,7 +456,6 @@ void inicializar_mozo(bool tablero[MAX_FILAS][MAX_COLUMNAS], mozo_t *mozo){
 * Post condiciones: Devuelve la validez de la nueva posicion generada del mozo.
 
 */
-
 bool es_accion_valida_mozo(coordenada_t posicion, juego_t juego){
 
     bool es_valida = true;
@@ -501,7 +481,6 @@ bool es_accion_valida_mozo(coordenada_t posicion, juego_t juego){
 * Post condiciones: Devuelve si se puede soltar la mopa.
 
 */
-
 bool puedo_soltar_mopa(coordenada_t posicion_mozo, juego_t *juego){
 
     bool es_accion_valida = true;
@@ -553,7 +532,6 @@ void agregar_mopa(juego_t *juego, objeto_t mopa) {
 * Post condiciones: Realiza la accion relacionada con la mopa.
 
 */
-
 void interaccion_mopa(coordenada_t posicion_mozo, juego_t *juego){
     int indice_mopa = buscar_indice_mopa(juego->herramientas,juego->cantidad_herramientas);
     if(!juego->mozo.tiene_mopa){
@@ -577,7 +555,6 @@ void interaccion_mopa(coordenada_t posicion_mozo, juego_t *juego){
 * Pre condiciones: Las posiciones de las mesas, herramientas , obstaculos, mozo y cocina deben estar correctamente inicializados con sus respectivas cantidades..
 * Post condiciones: Devuelve true si la posición está libre, false en caso contrario.
 */
-
 bool es_posicion_libre(juego_t juego, coordenada_t posicion){
     bool hay_lugar = true;
 
@@ -642,7 +619,6 @@ int distancia_de_cucaracha(juego_t *juego, mesa_t mesa) {
 Pre: El array de pedidos debe estar correctamente inicializado, con todos los campos del tipo pedido_t. La cantidad de pedidos debe ser mayor a cero. La cantidad de pedidos debe ser menor a el máximo de pedidos.
 Post: Elimina el pedido indicado por el id_mesa del array de pedidos. Decrementa la cantidad de pedidos en uno.
 */
-
 void eliminar_pedido(pedido_t pedidos_o_bandeja[], int *cantidad_pedidos, int indice_mesa) {
     for (int i = 0; i < *cantidad_pedidos; i++) {
         if (pedidos_o_bandeja[i].id_mesa == indice_mesa) {
@@ -661,7 +637,6 @@ Pre: El array de mesas debe estar correctamente inicializado y tener al menos ca
 
 Post: La paciencia de cada mesa en el array mesas se ha disminuye en 1. Si la distancia entre una mesa y una cucaracha es menor o igual a DISTANCIA_CUCARACHA, la paciencia de esa mesa se ha decrementado en PACIENCIA_CUCARACHA adicionalmente. Si la paciencia de una mesa es menor o igual a 0, los comensales de esa mesa se retiran sin pagar y el pedido correspondiente se ha eliminado de la bandeja o de los pedidos del mozo.
 */
-
 void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
     for(int i = 0; i < cantidad_mesas; i++){
 
@@ -696,7 +671,6 @@ Pre: La posicion del mozo esta correctamente inicializada, el array de obstaculo
 Post: Si el mozo se encuentra en la misma posición que un obstáculo de tipo CHARCO, dicho obstáculo será eliminado del arreglo de obstaculos. La cantidad de obstáculos  se actualizará correctamente.
 En caso de ser necesario todos los obstaculos se mueven uno hacia la izquierda.
 */
-
 void interaccion_charcos(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
     for(int i = 0; i < *cantidad_obstaculos ; i++){
         if(obstaculos[i].tipo == CHARCO && obstaculos[i].posicion.fil == mozo.posicion.fil && obstaculos[i].posicion.col == mozo.posicion.col){
@@ -714,7 +688,6 @@ Pre: La posicion del mozo esta correctamente inicializada, el array de obstaculo
 Post: Si el mozo se encuentra en la misma posición que un obstáculo de tipo CUCARACHA, dicho obstáculo será eliminado del arreglo de obstaculos. La cantidad de obstáculos  se actualizará correctamente.
 En caso de ser necesario todos los obstaculos se mueven uno hacia la izquierda.
 */
-
 void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
     for(int i = 0; i < *cantidad_obstaculos; i++ ){
         bool hay_cucaracha = estoy_en_misma_pos(mozo.posicion, obstaculos[i].posicion);
@@ -732,7 +705,6 @@ Pre condiciones: La posicion del mozo debe estar correctamente inicializada. EL 
 Post condiciones: Devuelve `true` si la distancia de Manhattan entre la posición del mozo y la posición del comensal en la mesa es menor o igual a 1.
 - Devuelve `false` en caso contrario.
 */
-
 bool esta_cerca_del_mozo(mozo_t *mozo, mesa_t mesa, int comensal) {
     int distancia = distancia_manhattan(mozo->posicion, mesa.posicion[comensal]);
     return distancia <= 1;
@@ -748,7 +720,6 @@ Post condiciones: Si el pedido correspondiente a id_mesa se encuentra en la band
 El dinero del juego se incrementará según la cantidad de lugares en la mesa.
 - Los atributos pedido tomado, paciencia y cantidad comensales de la mesa serán actualizados.
 */
-
 void procesar_entrega_pedido(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_mesa) {
     int i = 0;
     bool pedido_entregado = false;
@@ -775,7 +746,6 @@ void procesar_entrega_pedido(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_
 
 Post condiciones: Si el mozo está cerca de la mesa y el pedido ha sido tomado, se procesa la entrega del pedido.
 */
-
 void entregar_pedidos_mesa(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_mesa) {
     int j = 0;
     bool puedo_entregar_pedido = false;
@@ -799,13 +769,11 @@ void entregar_pedidos(mozo_t *mozo, mesa_t mesas[], int cantidad_mesas, juego_t 
     }
 }
 
-/*
-Pre condiciones:
+/*Pre: La posicion del mozo debe estar correctamente incializada. La cantidad de herramientas debe ser menor al maximo del arreglo de herramientas. EL dinero debe estar incializado.
 
-Post condiciones: 
-
+Post: Si el mozo está en la misma posición que una moneda, la moneda se elimina del arreglo herramientas.
+La cantidad de herramientas se decrementa por cada moneda recogida. Se le suma el dinero.
 */
-
 void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *dinero){
     for(int i = 0; i < *cantidad_herramientas; i++ ){
         bool hay_moneda = estoy_en_misma_pos(mozo->posicion, herramientas[i].posicion);
@@ -819,12 +787,16 @@ void interaccion_monedas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
 }
 
 /*
-Pre condiciones:
+Pre condiciones: 
+- El mozo debe estar inicializado.
+- El arreglo de herramientas debe estar inicializado y contener al menos un elemento.
+- La cantidad de herramientas debe ser mayor o igual a 0.
 
 Post condiciones: 
-
+- Si el mozo está en la misma posición que unos patines, estos se eliminan del arreglo de herramientas.
+- La cantidad de herramientas se decrementa si se recogen patines.
+- La cantidad de patines del mozo se incrementa si se recogen patines.
 */
-
 void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas){
     bool no_hay_patines = true;
     int i = 0;
@@ -844,12 +816,15 @@ void interaccion_patines(mozo_t *mozo, objeto_t herramientas[], int *cantidad_he
 }
 
 /*
-Pre condiciones:
+Pre condiciones: 
+- La cantidad de platos debe ser mayor o igual a 0.
+- El puntero a los platos debe estar inicializado.
 
 Post condiciones: 
-
+- Si la cantidad de platos es mayor a 0, se realoca la memoria para los platos.
+- Si la cantidad de platos es 0, se libera la memoria de los platos y se establece el puntero a NULL.
+- Si no se puede realocar la memoria, se imprime un mensaje de error.
 */
-
 void realocar_mem_platos(int cantidad_platos, pedido_t **platos) {
     if (cantidad_platos > 0) {
         pedido_t *aux_platos = realloc(*platos, (size_t)cantidad_platos * sizeof(pedido_t));
@@ -867,11 +842,15 @@ void realocar_mem_platos(int cantidad_platos, pedido_t **platos) {
 
 /*
 Pre condiciones:
+- El mozo y la cocina deben estar inicializados.
+- La cantidad de platos listos en la cocina debe ser mayor o igual a 0.
+- La cantidad de platos en la bandeja del mozo debe ser menor o igual a MAX_BANDEJA.
 
-Post condiciones: 
-
+Post condiciones:
+- Los platos listos de la cocina se mueven a la bandeja del mozo hasta que la bandeja esté llena o no queden platos listos.
+- La cantidad de platos listos en la cocina se actualiza.
+- La memoria para los platos listos en la cocina se realoca según la nueva cantidad de platos listos.
 */
-
 void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina) {
     int i = 0;
     int espacio_libre = mozo->cantidad_bandeja;
@@ -893,12 +872,16 @@ void pedidos_en_bandeja(mozo_t *mozo, cocina_t *cocina) {
 
 /*
 Pre condiciones:
+- La cocina debe estar inicializada.
+- La cantidad de platos en preparación debe ser mayor o igual a 0.
 
-Post condiciones: 
-
+Post condiciones:
+- Decrementa el tiempo de preparación de cada plato en preparación.
+- Si el tiempo de preparación de un plato llega a 0, se mueve a la lista de platos listos.
+- La cantidad de platos en preparación se actualiza.
+- La memoria para los platos en preparación y platos listos se realoca según sea necesario.
+- Si no se puede realocar la memoria, se imprime un mensaje de error.
 */
-
-
 void actualizar_pedidos(cocina_t *cocina) {
     for (int i = 0; i < cocina->cantidad_preparacion; i++) {
         
@@ -931,11 +914,14 @@ void actualizar_pedidos(cocina_t *cocina) {
 
 /*
 Pre condiciones:
+- El mozo y la cocina deben estar inicializados.
+- La cantidad de pedidos del mozo debe ser mayor o igual a 0.
 
-Post condiciones: 
-
+Post condiciones:
+- Los pedidos del mozo se mueven a la cocina para su preparación.
+- La memoria para los platos en preparación en la cocina se realoca según la nueva cantidad de platos en preparación.
+- Si no se puede realocar la memoria, se imprime un mensaje de error.
 */
-
 void encargar_pedidos(mozo_t *mozo, cocina_t *cocina) {
     int pedidos_encargados = mozo->cantidad_pedidos;
 
@@ -959,10 +945,15 @@ void encargar_pedidos(mozo_t *mozo, cocina_t *cocina) {
 
 /*
 Pre condiciones:
+- El mozo y la cocina deben estar inicializados.
+- La cantidad de pedidos del mozo debe ser mayor o igual a 0.
+- La cantidad de platos listos en la cocina debe ser mayor o igual a 0.
+- La cantidad de platos en la bandeja del mozo debe ser menor o igual a MAX_BANDEJA.
 
-Post condiciones: 
+Post condiciones:
+- Si el mozo tiene pedidos, estos se mueven a la cocina para su preparación.
+- Si hay platos listos en la cocina y hay espacio en la bandeja del mozo, los platos se mueven a la bandeja del mozo.
 */
-
 void gestionar_pedidos_mozo(mozo_t *mozo, cocina_t *cocina) {
     
     if(mozo->cantidad_pedidos > 0){
@@ -976,11 +967,12 @@ void gestionar_pedidos_mozo(mozo_t *mozo, cocina_t *cocina) {
 
 /*
 Pre condiciones:
+- El mozo y la cocina deben estar inicializados.
+- La posición del mozo y la posición de la cocina deben estar inicializadas.
 
-Post condiciones: 
-
+Post condiciones:
+- Si el mozo está en la misma posición que la cocina y no tiene mopa, se gestionan los pedidos del mozo.
 */
-
 void interaccion_cocina(mozo_t *mozo, cocina_t *cocina){
     if(!mozo->tiene_mopa ){
         bool misma_posicion_cocina = estoy_en_misma_pos(mozo->posicion,cocina->posicion);
@@ -995,11 +987,12 @@ void interaccion_cocina(mozo_t *mozo, cocina_t *cocina){
 
 /*
 Pre condiciones:
+- El mozo, los obstáculos, la cantidad de obstáculos y las mesas deben estar inicializados.
 
-Post condiciones: 
-
+Post condiciones:
+- Si el mozo está en la misma posición que un charco, los comensales de las mesas correspondientes a los pedidos en la bandeja del mozo se eliminan.
+- Los pedidos en la bandeja del mozo se eliminan.
 */
-
 void interaccion_charcos_bandeja(mozo_t *mozo, objeto_t obstaculos[], int *cantidad_obstaculos, mesa_t mesas[]) {
     for (int i = 0; i < *cantidad_obstaculos; i++) {
         if (mozo->posicion.fil == obstaculos[i].posicion.fil && mozo->posicion.col == obstaculos[i].posicion.col && obstaculos[i].tipo == CHARCO) {
@@ -1013,11 +1006,16 @@ void interaccion_charcos_bandeja(mozo_t *mozo, objeto_t obstaculos[], int *canti
 
 /*
 Pre condiciones:
+- El mozo debe estar inicializado.
+- El arreglo de herramientas debe estar inicializado y contener al menos un elemento.
+- La cantidad de herramientas debe ser mayor o igual a 0.
+- El puntero al dinero debe estar inicializado.
 
-Post condiciones: 
-
+Post condiciones:
+- Si el mozo está en la misma posición que unos patines, estos se eliminan del arreglo de herramientas y la cantidad de patines del mozo se incrementa.
+- Si el mozo está en la misma posición que una moneda, esta se elimina del arreglo de herramientas y el dinero del mozo se incrementa.
+- La cantidad de herramientas se decrementa por cada herramienta recogida.
 */
-
 void interaccion_herramientas(mozo_t *mozo, objeto_t herramientas[], int *cantidad_herramientas, int *dinero){
 
     if(mozo->tiene_mopa){
@@ -1032,11 +1030,13 @@ void interaccion_herramientas(mozo_t *mozo, objeto_t herramientas[], int *cantid
 
 /*
 Pre condiciones:
+- El mozo, los obstáculos, la cantidad de obstáculos y las mesas deben estar inicializados.
 
-Post condiciones: 
-
+Post condiciones:
+- Si el mozo tiene mopa, interactúa con los charcos.
+- Si el mozo no tiene mopa y tiene pedidos en la bandeja, interactúa con los charcos y elimina los pedidos.
+- Interactúa con las cucarachas.
 */
-
 void interaccion_obstaculos(mozo_t *mozo, objeto_t obstaculos[], int *cantidad_obstaculos, mesa_t mesas[]) {
 
     if(mozo->tiene_mopa){
@@ -1051,11 +1051,15 @@ void interaccion_obstaculos(mozo_t *mozo, objeto_t obstaculos[], int *cantidad_o
 
 /*
 Pre condiciones:
+- El juego y la acción deben estar inicializados.
+- La posición del mozo debe estar inicializada.
 
-Post condiciones: 
-
+Post condiciones:
+- Realiza la acción del mozo con patines y actualiza su posición y estado.
+- Si el movimiento es válido, interactúa con los obstáculos y herramientas.
+- Incrementa el contador de movimientos del juego.
+- Desactiva los patines del mozo y decrementa la cantidad de patines.
 */
-
 void accion_mozo_patines(juego_t *juego, char accion) {
     bool movimiento_valido = true;
     coordenada_t posicion_actual_mozo = juego->mozo.posicion;
@@ -1085,10 +1089,17 @@ void accion_mozo_patines(juego_t *juego, char accion) {
 }
 
 /*
-Pre:
-Post:
-*/
+Pre condiciones:
+- El arreglo de pedidos debe estar inicializado.
+- La cantidad de pedidos debe ser mayor o igual a 0.
+- La mesa debe estar inicializada y contener comensales.
+- El índice de la mesa debe ser válido.
 
+Post condiciones:
+- Genera un nuevo pedido para la mesa y lo agrega al arreglo de pedidos.
+- Actualiza la cantidad de pedidos.
+- Asigna el tiempo de preparación y la cantidad de platos al pedido.
+*/
 void generar_pedido(pedido_t pedidos[], int *cantidad_pedidos, mesa_t mesa, int indice_mesa) {
     int cantidad_platos_actual = 0;
     int tiempo_de_preparacion_actual = 0;
@@ -1121,19 +1132,24 @@ void generar_pedido(pedido_t pedidos[], int *cantidad_pedidos, mesa_t mesa, int 
 }
 
 /*
-Pre:
-Post:
-*/
+Pre condiciones:
+- Las posiciones del mozo y de la mesa deben estar inicializadas.
 
+Post condiciones:
+- Devuelve la distancia de Manhattan entre el mozo y la mesa.
+*/
 int distancia_mozo_mesa(coordenada_t posicion_mozo, coordenada_t posicion_ocupada_mesa){
     return distancia_manhattan(posicion_mozo, posicion_ocupada_mesa);
 }
 
 /*
-Pre:
-Post:
-*/
+Pre condiciones:
+- La posición del mozo y el juego deben estar inicializados.
 
+Post condiciones:
+- Toma el pedido de la mesa si el mozo está cerca y la mesa no ha tomado un pedido.
+- Genera un nuevo pedido y lo agrega al arreglo de pedidos del mozo.
+*/
 void tomar_pedido(coordenada_t posicion_mozo, juego_t *juego) {
     for (int i = 0; i < juego->cantidad_mesas; i++) {
         if (juego->mesas[i].cantidad_comensales != 0 && !juego->mesas[i].pedido_tomado) {
@@ -1153,11 +1169,12 @@ void tomar_pedido(coordenada_t posicion_mozo, juego_t *juego) {
 
 /*
 Pre condiciones:
+- La cantidad de patines y el juego deben estar inicializados.
+- La acción debe ser válida.
 
-Post condiciones: 
-
+Post condiciones:
+- Activa los patines del mozo si tiene patines disponibles y no tiene mopa.
 */
-
 void activar_patines(int cantidad_patines, juego_t *juego, char accion){
     if(juego->mozo.tiene_mopa){
         return;
@@ -1171,11 +1188,11 @@ void activar_patines(int cantidad_patines, juego_t *juego, char accion){
 
 /*
 Pre condiciones:
+- La posición del mozo y el juego deben estar inicializados.
 
-Post condiciones: 
-
+Post condiciones:
+- Si el mozo no tiene mopa, toma el pedido de la mesa si está cerca y la mesa no ha tomado un pedido.
 */
-
 void interaccion_pedidos(coordenada_t posicion_mozo, juego_t *juego){
     if(!juego->mozo.tiene_mopa){
         tomar_pedido(posicion_mozo, juego);
@@ -1189,7 +1206,6 @@ Pre condiciones: La accion debe ser valida la posicion del mozo debe estar inici
 Post condiciones: Genera la nueva posicion del mozo en base a que accion se ingreso.
 
 */
-
 void generar_nueva_accion_mozo(juego_t *juego, char accion){
 
     if(juego->mozo.patines_puestos){
@@ -1235,11 +1251,16 @@ void generar_nueva_accion_mozo(juego_t *juego, char accion){
 }
 
 /*
-Pre: -
-Post: 
+Pre condiciones:
+- La cantidad de mesas debe ser mayor o igual a 0.
+- El arreglo de mesas debe estar inicializado.
+- El puntero a índice de mesa con lugar debe estar inicializado.
+- La cantidad de comensales a ingresar debe ser mayor a 0.
+
+Post condiciones:
+- Devuelve true si hay asientos libres para la cantidad de comensales a ingresar, false en caso contrario.
+- Actualiza el índice de la mesa con lugar si se encuentra una mesa disponible.
 */
-
-
 bool hay_asientos_libres(int cantidad_mesas, mesa_t *mesa, int *indice_mesa_con_lugar, int comensales_a_ingresar){
 
     bool encontre_lugar = false;
@@ -1277,10 +1298,15 @@ bool hay_asientos_libres(int cantidad_mesas, mesa_t *mesa, int *indice_mesa_con_
 
 
 /*
-Pre:
-Post:
-*/
+Pre condiciones:
+- El arreglo de mesas debe estar inicializado.
+- La cantidad de mesas debe ser mayor o igual a 0.
+- La cantidad de comensales a ingresar debe ser mayor a 0.
 
+Post condiciones:
+- Asigna los comensales a una mesa disponible.
+- Actualiza la cantidad de comensales y la paciencia de la mesa asignada.
+*/
 void asignar_comensales(mesa_t *mesa, int cantidad_mesas, int comensales_a_ingresar){
 
     int indice_mesa_con_lugar;
@@ -1294,10 +1320,13 @@ void asignar_comensales(mesa_t *mesa, int cantidad_mesas, int comensales_a_ingre
 }
 
 /*
-Pre:
-Post:
-*/
+Pre condiciones:
+- El juego debe estar inicializado.
 
+Post condiciones:
+- Genera una posición aleatoria y, si está libre, coloca una cucaracha en esa posición.
+- Incrementa la cantidad de obstáculos en el juego.
+*/
 void aparecer_cucarachas(juego_t *juego){
     coordenada_t posicion_aleatoria;
     bool posicion_invalida = true;
@@ -1313,15 +1342,16 @@ void aparecer_cucarachas(juego_t *juego){
             posicion_invalida = false;
         }
     }
-
 }
 
 
 /*
-Pre:
-Post:
-*/
+Pre condiciones:
+- El juego debe estar inicializado.
 
+Post condiciones:
+- Genera una cantidad aleatoria de comensales y los asigna a las mesas disponibles en el juego.
+*/
 void llegada_comensales(juego_t *juego){
 
     int cantidad_comensales = generar_numero_aleatorio(MAX_COMENSALES,MIN_COMENSALES);
@@ -1337,6 +1367,7 @@ Las constantes LLEGADA_COMENSALES y APARECEN_CUCARACHAS deben estar definidas y 
 Post: Si el número de movimientos en el juego es múltiplo de LLEGADA_COMENSALES y mayor a 0, se llamará a la función llegada_comensales.
 - Si el número de movimientos en el juego es múltiplo de APARECEN_CUCARACHAS y mayor a 0, se llamará a la función'aparecer_cucarachas.
 */
+
 void actualizacion_del_juego(juego_t *juego){
     if(juego->movimientos % LLEGADA_COMENSALES == 0 && juego->movimientos > 0){
         llegada_comensales(juego);
