@@ -36,6 +36,7 @@
 #define CUCARACHA 'U'
 
 const int CANTIDAD_MESAS = 10;
+const int PACIENCIA_CUCARACHA = 1;
 const int LLEGADA_COMENSALES = 15;
 const int APARECEN_CUCARACHAS = 25;
 const int CANTIDAD_HERRAMIENTAS = 14;
@@ -573,8 +574,8 @@ void interaccion_mopa(coordenada_t posicion_mozo, juego_t *juego){
 }
 
 /*
-Pre:
-Post:
+* Pre condiciones: Las posiciones de las mesas, herramientas , obstaculos, mozo y cocina deben estar correctamente inicializados con sus respectivas cantidades..
+* Post condiciones: Devuelve true si la posición está libre, false en caso contrario.
 */
 
 bool es_posicion_libre(juego_t juego, coordenada_t posicion){
@@ -616,10 +617,12 @@ bool es_posicion_libre(juego_t juego, coordenada_t posicion){
 }
 
 /*
-Pre:
-Post:
-*/
+Pre: La posicion y las cantidades de las mesas deben estar correctamente incializadas. Los obstaculos y sus cantidades deben estar correctamente inicializados.
 
+Post:
+Devuelve la distancia mínima en términos de la distancia de Manhattan entre cualquier lugar de la mesa y cualquier cucaracha en el juego.
+Si no hay cucarachas en el juego, devuelve 100.
+*/
 int distancia_de_cucaracha(juego_t *juego, mesa_t mesa) {
     int distancia_minima = 100; 
     for(int j = 0; j < mesa.cantidad_lugares; j++) {
@@ -636,8 +639,8 @@ int distancia_de_cucaracha(juego_t *juego, mesa_t mesa) {
 }
 
 /*
-Pre:
-Post:
+Pre: El array de pedidos debe estar correctamente inicializado, con todos los campos del tipo pedido_t. La cantidad de pedidos debe ser mayor a cero. La cantidad de pedidos debe ser menor a el máximo de pedidos.
+Post: Elimina el pedido indicado por el id_mesa del array de pedidos. Decrementa la cantidad de pedidos en uno.
 */
 
 void eliminar_pedido(pedido_t pedidos_o_bandeja[], int *cantidad_pedidos, int indice_mesa) {
@@ -652,8 +655,11 @@ void eliminar_pedido(pedido_t pedidos_o_bandeja[], int *cantidad_pedidos, int in
 
 
 /*
-Pre:
-Post:
+Pre: El array de mesas debe estar correctamente inicializado y tener al menos cantidad_mesas elementos.
+- El array mesas debe estar correctamente inicializado y tener al menos cantidad_mesas elementos.
+- El puntero juego debe apuntar a una estructura de tipo juego_t correctamente inicializada.
+
+Post: La paciencia de cada mesa en el array mesas se ha disminuye en 1. Si la distancia entre una mesa y una cucaracha es menor o igual a DISTANCIA_CUCARACHA, la paciencia de esa mesa se ha decrementado en PACIENCIA_CUCARACHA adicionalmente. Si la paciencia de una mesa es menor o igual a 0, los comensales de esa mesa se retiran sin pagar y el pedido correspondiente se ha eliminado de la bandeja o de los pedidos del mozo.
 */
 
 void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
@@ -666,7 +672,7 @@ void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
             int distancia_mesa_cucaracha = distancia_de_cucaracha(juego, mesas[i]);
 
             if(distancia_mesa_cucaracha <= DISTANCIA_CUCARACHA){
-                mesas[i].paciencia -= DISTANCIA_CUCARACHA;
+                mesas[i].paciencia -= PACIENCIA_CUCARACHA;
             }
     
         }
@@ -685,8 +691,10 @@ void actualizar_paciencia(int cantidad_mesas, mesa_t mesas[], juego_t *juego){
 }
 
 /*
-Pre:
-Post:
+Pre: La posicion del mozo esta correctamente inicializada, el array de obstaculos esta correctamente incializado con todos los campos. Con su respectivo tope menor al maximo de obstaculos.
+
+Post: Si el mozo se encuentra en la misma posición que un obstáculo de tipo CHARCO, dicho obstáculo será eliminado del arreglo de obstaculos. La cantidad de obstáculos  se actualizará correctamente.
+En caso de ser necesario todos los obstaculos se mueven uno hacia la izquierda.
 */
 
 void interaccion_charcos(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
@@ -701,8 +709,10 @@ void interaccion_charcos(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obsta
 
 
 /*
-Pre:
-Post:
+Pre: La posicion del mozo esta correctamente inicializada, el array de obstaculos esta correctamente incializado con todos los campos. Con su respectivo tope menor al maximo de obstaculos.
+
+Post: Si el mozo se encuentra en la misma posición que un obstáculo de tipo CUCARACHA, dicho obstáculo será eliminado del arreglo de obstaculos. La cantidad de obstáculos  se actualizará correctamente.
+En caso de ser necesario todos los obstaculos se mueven uno hacia la izquierda.
 */
 
 void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obstaculos){
@@ -715,11 +725,12 @@ void interaccion_cucaracha(mozo_t mozo, objeto_t obstaculos[], int *cantidad_obs
         }
     }
 }
+
 /*
-Pre condiciones:
+Pre condiciones: La posicion del mozo debe estar correctamente inicializada. EL objeto mesa_t recibido debe eatar correctamente incializado y el comensal debe estar dentro del rango de cantidad de lugares de la mesa.
 
-Post condiciones: 
-
+Post condiciones: Devuelve `true` si la distancia de Manhattan entre la posición del mozo y la posición del comensal en la mesa es menor o igual a 1.
+- Devuelve `false` en caso contrario.
 */
 
 bool esta_cerca_del_mozo(mozo_t *mozo, mesa_t mesa, int comensal) {
@@ -729,9 +740,13 @@ bool esta_cerca_del_mozo(mozo_t *mozo, mesa_t mesa, int comensal) {
 
 /*
 Pre condiciones:
+Mozo debe tener sus peedido_t en bandeja inicializados correctamente.
+Mesa debe ser una meza con todos sus campos correctamente incializados. 
+EL id_mesa debe ser un numero válido que representa el identificador de una mesa.
 
-Post condiciones: 
-
+Post condiciones: Si el pedido correspondiente a id_mesa se encuentra en la bandeja del mozo, será eliminado.
+El dinero del juego se incrementará según la cantidad de lugares en la mesa.
+- Los atributos pedido tomado, paciencia y cantidad comensales de la mesa serán actualizados.
 */
 
 void procesar_entrega_pedido(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_mesa) {
@@ -741,7 +756,11 @@ void procesar_entrega_pedido(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_
     while (i < mozo->cantidad_bandeja && !pedido_entregado && mozo->cantidad_bandeja > 0) {
         if (mozo->bandeja[i].id_mesa == id_mesa) {
             eliminar_pedido(mozo->bandeja, &mozo->cantidad_bandeja, id_mesa);
-            juego->dinero += (mesa->cantidad_lugares > 1) ? PRECIO_MESA_CUATRO : PRECIO_MESA_UNO;
+            if(mesa->cantidad_lugares > 1){
+                juego->dinero += PRECIO_MESA_CUATRO;
+            }else{
+                juego->dinero += PRECIO_MESA_UNO;
+            }
 
             mesa->pedido_tomado = false;
             mesa->paciencia = 0;
@@ -752,11 +771,9 @@ void procesar_entrega_pedido(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_
     }
 }
 
-/*
-Pre condiciones:
+/* Pre condiciones: Mozo y mesa debe estar correctamente inicializado. Procesar_entrega_pedido y esta_cerca_del_mozo deben estar correctamente implementadas. Id mesa debe ser un identificador válido de una mesa existente.
 
-Post condiciones: 
-
+Post condiciones: Si el mozo está cerca de la mesa y el pedido ha sido tomado, se procesa la entrega del pedido.
 */
 
 void entregar_pedidos_mesa(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_mesa) {
@@ -772,13 +789,10 @@ void entregar_pedidos_mesa(mozo_t *mozo, mesa_t *mesa, juego_t *juego, int id_me
     }
 }
 
-/*
-Pre condiciones:
+/* Pre condiciones: Mozo y mesas deben estar correctamente inicializados. Con cantidad mesas menor al maximo del arreglo de mesas. entegar_pedidos_mesa debe estar correctamente implementada.
 
-Post condiciones: 
-
+Post condiciones: La función entregar_pedidos_mesa habrá sido llamada una vez por cada mesa en el arreglo `mesas`.
 */
-
 void entregar_pedidos(mozo_t *mozo, mesa_t mesas[], int cantidad_mesas, juego_t *juego) {
     for (int i = 0; i < cantidad_mesas; i++) {
         entregar_pedidos_mesa(mozo, &mesas[i], juego, i);
@@ -1317,13 +1331,11 @@ void llegada_comensales(juego_t *juego){
 
 
 /*
-Pre: 
-- El puntero 'juego' debe apuntar a una estructura de tipo 'juego_t' válida y correctamente inicializada.
-- Las constantes 'LLEGADA_COMENSALES' y 'APARECEN_CUCARACHAS' deben estar definidas y ser mayores a 0.
+Pre: Los movimientos del juego debe estar inicializado.
+Las constantes LLEGADA_COMENSALES y APARECEN_CUCARACHAS deben estar definidas y ser mayores a 0.
 
-Post: 
-- Si el número de movimientos en el juego es múltiplo de 'LLEGADA_COMENSALES' y mayor a 0, se llamará a la función 'llegada_comensales'.
-- Si el número de movimientos en el juego es múltiplo de 'APARECEN_CUCARACHAS' y mayor a 0, se llamará a la función 'aparecer_cucarachas'.
+Post: Si el número de movimientos en el juego es múltiplo de LLEGADA_COMENSALES y mayor a 0, se llamará a la función llegada_comensales.
+- Si el número de movimientos en el juego es múltiplo de APARECEN_CUCARACHAS y mayor a 0, se llamará a la función'aparecer_cucarachas.
 */
 void actualizacion_del_juego(juego_t *juego){
     if(juego->movimientos % LLEGADA_COMENSALES == 0 && juego->movimientos > 0){
