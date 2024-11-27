@@ -16,6 +16,7 @@
 
 const int JUEGO_GANADO = 1;
 const int CONTINUAR_JUEGO = 0;
+const int DINERO_NECESARIO = 150000;
 
 /*
 Pre: Accion y las constantes deben estar previamente incializados.
@@ -51,6 +52,7 @@ int main(){
     srand (( unsigned)time(NULL));
     inicializar_juego(&juego);
 
+    int dinero_faltante;
     bool sigue_el_juego = true;
     while(sigue_el_juego){
         int juego_estado = estado_juego(juego);
@@ -63,7 +65,8 @@ int main(){
             sigue_el_juego = false;
             destruir_juego(&juego);
         }else{
-            printf("Dia terminado! Has perdido :(\n");
+            dinero_faltante = DINERO_NECESARIO - juego.dinero  ;
+            printf("Dia terminado! Has perdido, te faltaron $%i pesos :(\n", dinero_faltante);
             sigue_el_juego = false;
             destruir_juego(&juego);
         }
