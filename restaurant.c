@@ -34,6 +34,10 @@
 #define VACIO '.'
 #define ASIENTO_OCUPADO 'X'
 #define CUCARACHA 'U'
+#define COLOR_RESET "\x1b[0m"
+#define COLOR_TOMADO "\x1b[31m"
+#define COLOR_PREPARACION "\x1b[33m" 
+#define COLOR_LISTO "\x1b[32m"
 
 const int CANTIDAD_MESAS = 10;
 const int PACIENCIA_CUCARACHA = 2;
@@ -174,15 +178,14 @@ void asignar_posiciones(juego_t *juego,char mapa[MAX_FILAS][MAX_COLUMNAS]){
 * Post condiciones: Muestra el mapa y los datos importantes del juego por pantalla.
 
 */
-void imprimir_juego(juego_t juego){
-
+void imprimir_juego(juego_t juego) {
     char mapa[MAX_FILAS][MAX_COLUMNAS];
     inicializar_mapa(mapa);
 
     asignar_posiciones(&juego, mapa);
     system("clear");
 
-    printf("INFORMACION \nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Patines disponibles = %i, Patines activados = %s ,Mopa agarrada: %s\n", 
+    printf("INFORMACION\nDinero = %i, Movimientos (A los 200 se termina el dia) = %i, Patines disponibles = %i, Patines activados = %s, Mopa agarrada: %s\n", 
         juego.dinero, 
         juego.movimientos,
         juego.mozo.cantidad_patines, 
@@ -201,43 +204,46 @@ void imprimir_juego(juego_t juego){
         for (int j = 0; j < juego.cocina.cantidad_preparacion; j++) {
             if (juego.cocina.platos_preparacion[j].id_mesa == i) {
                 en_preparacion = true;
+                break;
             }
         }
 
         for (int j = 0; j < juego.cocina.cantidad_listos; j++) {
             if (juego.cocina.platos_listos[j].id_mesa == i) {
                 listo = true;
+                break;
             }
         }
-        
+
         for (int j = 0; j < juego.mozo.cantidad_bandeja; j++) {
             if (juego.mozo.bandeja[j].id_mesa == i) {
                 en_bandeja = true;
+                break;
             }
         }
 
         if (en_preparacion || listo || en_bandeja) {
             if (en_preparacion) {
-                printf("Pedido en preparación ");
+                printf(COLOR_PREPARACION "Pedido en preparación " COLOR_RESET);
             }
             if (listo) {
-                printf("Pedido listo ");
+                printf(COLOR_LISTO "Pedido listo " COLOR_RESET);
             }
             if (en_bandeja) {
-                printf("Pedido en bandeja ");
+                printf(COLOR_LISTO "Pedido en bandeja " COLOR_RESET);
             }
         } else if (juego.mesas[i].pedido_tomado) {
-            printf("Pedido tomado ");
+            printf(COLOR_TOMADO "Pedido tomado " COLOR_RESET);
         } else {
             printf("Sin pedido ");
         }
     }
 
     printf("\n");
-
-    for (int i = 0; i < MAX_FILAS; i++){
-        for (int j = 0; j < MAX_COLUMNAS; j++){
-            printf("| %c ", mapa[i][j]);
+    
+    for (int i = 0; i < MAX_FILAS; i++) {
+        for (int j = 0; j < MAX_COLUMNAS; j++) {
+            printf(" %c |", mapa[i][j]);
         }
         printf("\n");
     }
