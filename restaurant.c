@@ -172,6 +172,7 @@ void asignar_posiciones(juego_t *juego,char mapa[MAX_FILAS][MAX_COLUMNAS]){
     mapa[juego->cocina.posicion.fil][juego->cocina.posicion.col] = COCINA;
 }
 
+
 /*
 * Pre condiciones: El mapa y todos los campos en juego a mostrar deben estar incializados.
 
@@ -200,26 +201,29 @@ void imprimir_juego(juego_t juego) {
         bool en_preparacion = false;
         bool listo = false;
         bool en_bandeja = false;
+        int j = 0;
+        int k = 0;
+        int l = 0;
 
-        for (int j = 0; j < juego.cocina.cantidad_preparacion; j++) {
+        while(j < juego.cocina.cantidad_preparacion && !en_preparacion){
             if (juego.cocina.platos_preparacion[j].id_mesa == i) {
                 en_preparacion = true;
-                break;
             }
+            j++;
         }
 
-        for (int j = 0; j < juego.cocina.cantidad_listos; j++) {
-            if (juego.cocina.platos_listos[j].id_mesa == i) {
+        while(k < juego.cocina.cantidad_listos && !listo){
+            if (juego.cocina.platos_listos[k].id_mesa == i) {
                 listo = true;
-                break;
             }
+            k++;
         }
 
-        for (int j = 0; j < juego.mozo.cantidad_bandeja; j++) {
-            if (juego.mozo.bandeja[j].id_mesa == i) {
+        while(l < juego.mozo.cantidad_bandeja && !en_bandeja){
+            if (juego.mozo.bandeja[l].id_mesa == i) {
                 en_bandeja = true;
-                break;
             }
+            l++;
         }
 
         if (en_preparacion || listo || en_bandeja) {
